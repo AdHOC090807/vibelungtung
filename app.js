@@ -1,6 +1,7 @@
 /**
  * FlashLearn - Main Application Logic
- * Supports Multi-language Flashcards (Japanese 🇯🇵, English 🇬🇧, Korean 🇰🇷...) with Dual-Engine Native Audio
+ * Supports Multi-language Flashcards (Japanese 🇯🇵, English 🇬🇧, Korean 🇰🇷...)
+ * With Dual-Engine Native Audio & Auto-Play Audio Support
  */
 
 // Initial Sample Decks
@@ -146,7 +147,7 @@ const DEFAULT_DECKS = [
 
 class FlashLearnApp {
   constructor() {
-    this.storageKey = 'flashlearn_app_data_v3';
+    this.storageKey = 'flashlearn_app_data_v4';
     this.decks = [];
     this.currentDeckId = null;
     this.currentCardIndex = 0;
@@ -154,11 +155,13 @@ class FlashLearnApp {
     this.activeFilter = 'all'; // 'all' | 'learning' | 'starred'
     this.parsedPdfCards = [];
     this._currentAudio = null;
+    this.isAutoPlay = localStorage.getItem('flashlearn_autoplay') === 'true';
 
     this.initElements();
     this.loadData();
     this.initEvents();
     this.initTheme();
+    this.updateAutoPlayUI();
     this.render();
   }
 
@@ -174,6 +177,11 @@ class FlashLearnApp {
     this.progressBar = document.getElementById('progressBar');
     this.btnShuffle = document.getElementById('btnShuffle');
     this.btnResetProgress = document.getElementById('btnResetProgress');
+
+    // Auto Play Toggle
+    this.btnToggleAutoPlay = document.getElementById('btnToggleAutoPlay');
+    this.autoPlayIcon = document.getElementById('autoPlayIcon');
+    this.autoPlayLabel = document.getElementById('autoPlayLabel');
 
     // Filter Tabs
     this.filterTabs = document.querySelectorAll('.filter-tab');
@@ -252,7 +260,8 @@ class FlashLearnApp {
   loadData() {
     let saved = null;
     try {
-      saved = localStorage.getItem('flashlearn_app_data_v3') || 
+      saved = localStorage.getItem('flashlearn_app_data_v4') ||
+              localStorage.getItem('flashlearn_app_data_v3') || 
               localStorage.getItem('flashlearn_app_data_v2') || 
               localStorage.getItem('flashlearn_app_data_v1');
       if (saved) {
@@ -265,7 +274,7 @@ class FlashLearnApp {
     if (!this.decks || this.decks.length === 0) {
       this.decks = JSON.parse(JSON.stringify(DEFAULT_DECKS));
     } else {
-      // Ensure Japanese deck is present if user had an older version
+      // Ensure Japanese deck is present
       const hasJapanese = this.decks.some(d => d.id === 'deck-japanese-n5' || (d.lang && d.lang.startsWith('ja')));
       if (!hasJapanese) {
         const jpDeck = DEFAULT_DECKS.find(d => d.id === 'deck-japanese-n5');
@@ -337,7 +346,7 @@ class FlashLearnApp {
   // Detect language of word: Japanese, Korean, Chinese, or English
   detectLanguage(text) {
     if (!text) return 'en-US';
-    // Japanese: Hiragana, Katakana, or Kanji
+    // Japanese: Hiragana, Katakana, or typical Japanese Kanji
     if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) {
       return 'ja-JP';
     }
@@ -361,7 +370,7 @@ class FlashLearnApp {
     if (lang === 'ja-JP' && jpMatch) {
       return jpMatch[1]; // speak the kana reading directly
     }
-    // Remove parentheses and slashes
+    // Remove parentheses and punctuation
     return text.replace(/[\(\)\[\]\/]/g, ' ').trim();
   }
 
@@ -493,6 +502,7 @@ class FlashLearnApp {
       this.resetFlipWithoutAnimation();
       this.currentCardIndex++;
       this.render();
+      this.checkAndAutoPlay();
     } else if (cards.length > 0 && this.currentCardIndex === cards.length - 1) {
       this.triggerConfetti();
       this.showToast('🎉 Tuyệt vời! Bạn đã xem hết tất cả các thẻ trong phần này.');
@@ -504,6 +514,7 @@ class FlashLearnApp {
       this.resetFlipWithoutAnimation();
       this.currentCardIndex--;
       this.render();
+      this.checkAndAutoPlay();
     }
   }
 
@@ -533,9 +544,51 @@ class FlashLearnApp {
     this.showToast(card.starred ? '⭐ Đã thêm vào mục Yêu thích' : 'Đã bỏ yêu thích');
   }
 
+  // ==================== AUTO-PLAY LOGIC ====================
+  toggleAutoPlay() {
+    this.isAutoPlay = !this.isAutoPlay;
+    localStorage.setItem('flashlearn_autoplay', this.isAutoPlay ? 'true' : 'false');
+    this.updateAutoPlayUI();
+
+    if (this.isAutoPlay) {
+      this.showToast('🔊 Đã BẬT tự động đọc từ khi chuyển thẻ!');
+      const card = this.getCurrentCard();
+      if (card && card.word) {
+        this.playAudio(card.word);
+      }
+    } else {
+      this.showToast('🔇 Đã TẮT tự động đọc từ');
+    }
+  }
+
+  updateAutoPlayUI() {
+    if (this.isAutoPlay) {
+      this.btnToggleAutoPlay.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/15 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 transition shadow-sm active:scale-95';
+      this.autoPlayLabel.textContent = 'Tự động đọc: BẬT 🔊';
+      this.autoPlayIcon.className = 'w-3.5 h-3.5 text-emerald-500 animate-pulse';
+    } else {
+      this.btnToggleAutoPlay.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-sm active:scale-95';
+      this.autoPlayLabel.textContent = 'Tự động đọc: Tắt';
+      this.autoPlayIcon.className = 'w-3.5 h-3.5 text-slate-400';
+    }
+    lucide.createIcons();
+  }
+
+  checkAndAutoPlay() {
+    if (this.isAutoPlay) {
+      const card = this.getCurrentCard();
+      if (card && card.word) {
+        setTimeout(() => {
+          this.playAudio(card.word);
+        }, 120);
+      }
+    }
+  }
+
   // ==================== DUAL-ENGINE AUDIO PLAYER ====================
-  // Engine 1: Google Translate Native Audio Stream (100% works across devices)
-  // Engine 2: Web Speech Synthesis (offline fallback)
+  // Engine 1: Youdao Native Dictionary Audio Stream (zero referrer blocks, instant MP3)
+  // Engine 2: Google Translate Audio Stream (no-referrer mode)
+  // Engine 3: Web Speech Synthesis (offline fallback)
   playAudio(rawText, explicitLang = null) {
     if (!rawText) return;
 
@@ -545,8 +598,10 @@ class FlashLearnApp {
     const clean = this.cleanTextForSpeech(rawText, targetLang);
     const textToSpeak = clean || rawText;
 
-    const langCode = targetLang.startsWith('ja') ? 'ja' : (targetLang.startsWith('en') ? 'en' : (targetLang.startsWith('ko') ? 'ko' : 'zh-CN'));
-    const langLabel = langCode === 'ja' ? 'Tiếng Nhật 🇯🇵' : (langCode === 'en' ? 'Tiếng Anh 🇬🇧' : langCode);
+    const isJapanese = targetLang.startsWith('ja');
+    const isEnglish = targetLang.startsWith('en');
+    const langCode = isJapanese ? 'ja' : (isEnglish ? 'en' : (targetLang.startsWith('ko') ? 'ko' : 'zh-CN'));
+    const langLabel = isJapanese ? 'Tiếng Nhật 🇯🇵' : (langCode === 'en' ? 'Tiếng Anh 🇬🇧' : langCode);
 
     this.showToast(`🔊 Đang phát âm (${langLabel})...`);
 
@@ -558,15 +613,35 @@ class FlashLearnApp {
       } catch (e) {}
     }
 
-    const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(textToSpeak)}`;
-    const audio = new Audio(audioUrl);
+    // Determine high-definition MP3 voice URL
+    let primaryUrl = '';
+    if (isJapanese) {
+      primaryUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&le=jap`;
+    } else if (isEnglish) {
+      primaryUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&type=2`;
+    } else {
+      primaryUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(textToSpeak)}`;
+    }
+
+    const audio = document.createElement('audio');
+    audio.referrerPolicy = 'no-referrer';
+    audio.src = primaryUrl;
     this._currentAudio = audio;
 
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch(err => {
-        console.warn('Google TTS failed, falling back to Web Speech API:', err);
-        this.fallbackWebSpeech(textToSpeak, targetLang);
+        console.warn('Primary audio stream failed, trying Google TTS / Web Speech:', err);
+        const backupUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(textToSpeak)}`;
+        const backupAudio = document.createElement('audio');
+        backupAudio.referrerPolicy = 'no-referrer';
+        backupAudio.src = backupUrl;
+        this._currentAudio = backupAudio;
+
+        backupAudio.play().catch(gErr => {
+          console.warn('Backup audio failed, falling back to Web Speech Synthesis:', gErr);
+          this.fallbackWebSpeech(textToSpeak, targetLang);
+        });
       });
     }
   }
@@ -607,6 +682,7 @@ class FlashLearnApp {
     this.saveData();
     this.render();
     this.showToast('🔀 Đã xáo trộn ngẫu nhiên thứ tự các thẻ!');
+    this.checkAndAutoPlay();
   }
 
   resetDeckProgress() {
@@ -950,6 +1026,7 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     this.pdfFileInput.value = '';
 
     this.showToast(`🎉 Đã thêm thành công ${newCards.length} từ vựng vào "${targetDeck.name}"!`);
+    this.checkAndAutoPlay();
   }
 
   // ==================== DECK MANAGEMENT ====================
@@ -1019,6 +1096,7 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     this.renderDeckListModal();
     this.render();
     this.showToast(`Đã tạo bộ thẻ: "${name}"`);
+    this.checkAndAutoPlay();
   }
 
   selectDeckFromModal(deckId) {
@@ -1028,6 +1106,7 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     this.populateDeckSelectors();
     this.render();
     this.closeDeckModal();
+    this.checkAndAutoPlay();
   }
 
   deleteDeck(deckId) {
@@ -1046,6 +1125,7 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       this.renderDeckListModal();
       this.render();
       this.showToast('Đã xóa bộ thẻ!');
+      this.checkAndAutoPlay();
     }
   }
 
@@ -1071,6 +1151,7 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       this.renderDeckListModal();
       this.render();
       this.showToast('Đã khôi phục dữ liệu mặc định ban đầu');
+      this.checkAndAutoPlay();
     }
   }
 
@@ -1110,6 +1191,9 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     this.btnMarkMastered.addEventListener('click', () => this.markStatus(true));
     this.btnStarCard.addEventListener('click', () => this.toggleStar());
 
+    // Auto Play Toggle Button
+    this.btnToggleAutoPlay.addEventListener('click', () => this.toggleAutoPlay());
+
     // Audio Buttons (Front word, Back word, Example sentence)
     this.btnPlaySound.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1135,6 +1219,7 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       this.resetFlipWithoutAnimation();
       this.currentCardIndex = 0;
       this.render();
+      this.checkAndAutoPlay();
     });
 
     // Top action buttons
@@ -1240,6 +1325,9 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
         e.preventDefault();
         const card = this.getCurrentCard();
         if (card) this.playAudio(card.word);
+      } else if (e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        this.toggleAutoPlay();
       }
     });
   }

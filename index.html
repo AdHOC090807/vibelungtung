@@ -6,6 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
+  <meta name="referrer" content="no-referrer">
   <title>FlashLearn - Học Từ Vựng Flashcard Thông Minh</title>
   
   <!-- Google Fonts -->
@@ -53,7 +54,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
   <!-- Custom CSS with Cache Buster -->
-  <link rel="stylesheet" href="style.css?v=2.4">
+  <link rel="stylesheet" href="style.css?v=2.5">
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
 
@@ -115,8 +116,14 @@
         </span>
       </div>
 
-      <!-- Filter options -->
+      <!-- Filter options & AutoPlay -->
       <div class="flex items-center gap-2">
+        <!-- Auto Play Toggle -->
+        <button id="btnToggleAutoPlay" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-sm active:scale-95" title="Bật/Tắt tự động phát âm khi chuyển thẻ">
+          <i data-lucide="volume-2" id="autoPlayIcon" class="w-3.5 h-3.5 text-slate-400"></i>
+          <span id="autoPlayLabel">Tự động đọc: Tắt</span>
+        </button>
+
         <div class="inline-flex bg-slate-200/60 dark:bg-slate-800/80 p-0.5 rounded-lg text-xs font-medium">
           <button class="filter-tab active px-2.5 py-1 rounded-md transition" data-filter="all">Tất cả</button>
           <button class="filter-tab px-2.5 py-1 rounded-md transition text-slate-600 dark:text-slate-400" data-filter="learning">Cần ôn</button>
@@ -525,8 +532,8 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.</pre>
   </div>
 
   <!-- Scripts with Cache Buster -->
-  <script src="pdf-parser.js?v=2.4"></script>
-  <script src="app.js?v=2.4"></script>
+  <script src="pdf-parser.js?v=2.5"></script>
+  <script src="app.js?v=2.5"></script>
   <script>
     // Initialize Lucide icons
     lucide.createIcons();
