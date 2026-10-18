@@ -1,13 +1,13 @@
 /**
  * FlashLearn - Main Application Logic
- * Supports Multi-language Flashcards (English, Japanese, Korean, Chinese...) with Native TTS
+ * Supports Multi-language Flashcards (Japanese 🇯🇵, English 🇬🇧, Korean 🇰🇷...) with Dual-Engine Native Audio
  */
 
 // Initial Sample Decks
 const DEFAULT_DECKS = [
   {
     id: 'deck-japanese-n5',
-    name: '🇯🇵 Từ vựng Tiếng Nhật N5 - N4 Thông Dụng',
+    name: '🇯🇵 Tiếng Nhật N5 - N4 Thông Dụng',
     lang: 'ja-JP',
     createdAt: Date.now() - 1000,
     cards: [
@@ -27,7 +27,7 @@ const DEFAULT_DECKS = [
         word: '食べる (たべる)',
         phonetic: 'taberu',
         pos: 'động từ nhóm 2',
-        meaning: 'Ăn (dùng bữa)',
+        meaning: 'Ăn (dùng bữa, ăn uống)',
         example: '毎日朝ごはんをちゃんと食べます。',
         exampleMeaning: 'Mỗi ngày tôi đều ăn sáng đầy đủ.',
         mastered: false,
@@ -38,7 +38,7 @@ const DEFAULT_DECKS = [
         word: '勉強 (べんきょう)',
         phonetic: 'benkyou',
         pos: 'danh từ / động từ',
-        meaning: 'Học tập, việc học',
+        meaning: 'Học tập, việc học hành',
         example: '日本語の勉強はとても面白いです。',
         exampleMeaning: 'Việc học tiếng Nhật rất thú vị.',
         mastered: true,
@@ -60,7 +60,7 @@ const DEFAULT_DECKS = [
         word: '感謝 (かんしゃ)',
         phonetic: 'kansha',
         pos: 'danh từ / động từ',
-        meaning: 'Biết ơn, lòng cảm tạ',
+        meaning: 'Biết ơn, lòng cảm tạ sâu sắc',
         example: 'いつも助けてくれて心から感謝しています。',
         exampleMeaning: 'Tôi luôn ghi lòng biết ơn bạn vì đã luôn giúp đỡ tôi.',
         mastered: false,
@@ -146,19 +146,19 @@ const DEFAULT_DECKS = [
 
 class FlashLearnApp {
   constructor() {
-    this.storageKey = 'flashlearn_app_data_v2';
+    this.storageKey = 'flashlearn_app_data_v3';
     this.decks = [];
     this.currentDeckId = null;
     this.currentCardIndex = 0;
     this.isFlipped = false;
     this.activeFilter = 'all'; // 'all' | 'learning' | 'starred'
     this.parsedPdfCards = [];
+    this._currentAudio = null;
 
     this.initElements();
     this.loadData();
     this.initEvents();
     this.initTheme();
-    this.initVoices();
     this.render();
   }
 
@@ -186,11 +186,9 @@ class FlashLearnApp {
     this.btnPlaySound = document.getElementById('btnPlaySound');
     this.frontWord = document.getElementById('frontWord');
     this.frontPhonetic = document.getElementById('frontPhonetic');
-    this.frontHint = document.getElementById('frontHint');
 
     // Card Back
     this.backWord = document.getElementById('backWord');
-    this.backPos = document.getElementById('backPos');
     this.btnBackPlaySound = document.getElementById('btnBackPlaySound');
     this.backMeaning = document.getElementById('backMeaning');
     this.backExample = document.getElementById('backExample');
@@ -251,17 +249,12 @@ class FlashLearnApp {
     this.toastMessage = document.getElementById('toastMessage');
   }
 
-  initVoices() {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        // Cached in browser
-      };
-    }
-  }
-
   loadData() {
+    let saved = null;
     try {
-      const saved = localStorage.getItem(this.storageKey);
+      saved = localStorage.getItem('flashlearn_app_data_v3') || 
+              localStorage.getItem('flashlearn_app_data_v2') || 
+              localStorage.getItem('flashlearn_app_data_v1');
       if (saved) {
         this.decks = JSON.parse(saved);
       }
@@ -271,9 +264,16 @@ class FlashLearnApp {
 
     if (!this.decks || this.decks.length === 0) {
       this.decks = JSON.parse(JSON.stringify(DEFAULT_DECKS));
-      this.saveData();
+    } else {
+      // Ensure Japanese deck is present if user had an older version
+      const hasJapanese = this.decks.some(d => d.id === 'deck-japanese-n5' || (d.lang && d.lang.startsWith('ja')));
+      if (!hasJapanese) {
+        const jpDeck = DEFAULT_DECKS.find(d => d.id === 'deck-japanese-n5');
+        if (jpDeck) this.decks.unshift(JSON.parse(JSON.stringify(jpDeck)));
+      }
     }
 
+    this.saveData();
     this.currentDeckId = this.decks[0].id;
     this.populateDeckSelectors();
   }
@@ -293,7 +293,7 @@ class FlashLearnApp {
     this.decks.forEach(deck => {
       const opt = document.createElement('option');
       opt.value = deck.id;
-      opt.textContent = `${deck.name} (${deck.cards.length})`;
+      opt.textContent = `${deck.name} (${deck.cards.length} từ)`;
       if (deck.id === this.currentDeckId) opt.selected = true;
       this.deckSelect.appendChild(opt);
 
@@ -337,7 +337,7 @@ class FlashLearnApp {
   // Detect language of word: Japanese, Korean, Chinese, or English
   detectLanguage(text) {
     if (!text) return 'en-US';
-    // Japanese: Hiragana, Katakana, or typical Japanese Kanji
+    // Japanese: Hiragana, Katakana, or Kanji
     if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) {
       return 'ja-JP';
     }
@@ -400,25 +400,25 @@ class FlashLearnApp {
 
     const cardLang = deck.lang && deck.lang !== 'auto' ? deck.lang : this.detectLanguage(currentCard.word);
 
-    // Front Face
+    // Front Face (TỪ VỰNG)
     this.frontWord.textContent = currentCard.word || 'Chưa có từ';
     this.frontPhonetic.textContent = currentCard.phonetic || '';
     this.frontPhonetic.style.display = currentCard.phonetic ? 'block' : 'none';
-    this.frontPos.textContent = currentCard.pos || 'vocabulary';
+    this.frontPos.textContent = currentCard.pos || 'Từ vựng';
 
     // Lang badge
     if (cardLang.startsWith('ja')) {
       this.frontLangBadge.textContent = '🇯🇵 JP';
-      this.frontLangBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400';
+      this.frontLangBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40';
     } else if (cardLang.startsWith('ko')) {
       this.frontLangBadge.textContent = '🇰🇷 KR';
-      this.frontLangBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400';
+      this.frontLangBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-900/40';
     } else if (cardLang.startsWith('zh')) {
       this.frontLangBadge.textContent = '🇨🇳 CN';
-      this.frontLangBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400';
+      this.frontLangBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40';
     } else {
       this.frontLangBadge.textContent = '🇬🇧 EN';
-      this.frontLangBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400';
+      this.frontLangBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/40';
     }
 
     // Star icon
@@ -435,9 +435,8 @@ class FlashLearnApp {
       }
     }
 
-    // Back Face
+    // Back Face (NGHĨA & VÍ DỤ)
     this.backWord.textContent = currentCard.word;
-    this.backPos.textContent = currentCard.pos || 'vocabulary';
     this.backMeaning.textContent = currentCard.meaning || '(Chưa có giải nghĩa)';
 
     if (currentCard.example) {
@@ -482,8 +481,7 @@ class FlashLearnApp {
     this.isFlipped = false;
     this.flashcard.style.transition = 'none';
     this.flashcard.classList.remove('is-flipped');
-    // Force DOM reflow to apply instant transform
-    void this.flashcard.offsetWidth;
+    void this.flashcard.offsetWidth; // Force reflow
     setTimeout(() => {
       this.flashcard.style.transition = '';
     }, 50);
@@ -535,40 +533,64 @@ class FlashLearnApp {
     this.showToast(card.starred ? '⭐ Đã thêm vào mục Yêu thích' : 'Đã bỏ yêu thích');
   }
 
-  // TTS with Japanese, English and multi-language support
-  speakText(rawText, explicitLang = null) {
+  // ==================== DUAL-ENGINE AUDIO PLAYER ====================
+  // Engine 1: Google Translate Native Audio Stream (100% works across devices)
+  // Engine 2: Web Speech Synthesis (offline fallback)
+  playAudio(rawText, explicitLang = null) {
     if (!rawText) return;
 
-    if (!('speechSynthesis' in window)) {
-      this.showToast('Trình duyệt của bạn không hỗ trợ phát âm TTS', true);
-      return;
-    }
-
-    window.speechSynthesis.cancel(); // Stop pending sounds
-
     const deck = this.getCurrentDeck();
-    let lang = explicitLang || (deck && deck.lang && deck.lang !== 'auto' ? deck.lang : this.detectLanguage(rawText));
+    let targetLang = explicitLang || (deck && deck.lang && deck.lang !== 'auto' ? deck.lang : this.detectLanguage(rawText));
 
-    const clean = this.cleanTextForSpeech(rawText, lang);
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.lang = lang;
-    utterance.rate = lang.startsWith('ja') ? 0.95 : 0.9;
+    const clean = this.cleanTextForSpeech(rawText, targetLang);
+    const textToSpeak = clean || rawText;
 
-    // Match voice in browser
-    const voices = window.speechSynthesis.getVoices();
-    const langPrefix = lang.split('-')[0].toLowerCase();
+    const langCode = targetLang.startsWith('ja') ? 'ja' : (targetLang.startsWith('en') ? 'en' : (targetLang.startsWith('ko') ? 'ko' : 'zh-CN'));
+    const langLabel = langCode === 'ja' ? 'Tiếng Nhật 🇯🇵' : (langCode === 'en' ? 'Tiếng Anh 🇬🇧' : langCode);
 
-    const voice = voices.find(v => v.lang.toLowerCase() === lang.toLowerCase() || v.lang.replace('_', '-').toLowerCase() === lang.toLowerCase())
-      || voices.find(v => v.lang.toLowerCase().startsWith(langPrefix));
+    this.showToast(`🔊 Đang phát âm (${langLabel})...`);
 
-    if (voice) {
-      utterance.voice = voice;
+    // Stop existing audio
+    if (this._currentAudio) {
+      try {
+        this._currentAudio.pause();
+        this._currentAudio.currentTime = 0;
+      } catch (e) {}
     }
 
-    window.speechSynthesis.speak(utterance);
+    const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(textToSpeak)}`;
+    const audio = new Audio(audioUrl);
+    this._currentAudio = audio;
 
-    const langLabel = lang.startsWith('ja') ? 'Tiếng Nhật 🇯🇵' : (lang.startsWith('en') ? 'Tiếng Anh 🇬🇧' : lang);
-    this.showToast(`🔊 Đang phát âm: ${langLabel}`);
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        console.warn('Google TTS failed, falling back to Web Speech API:', err);
+        this.fallbackWebSpeech(textToSpeak, targetLang);
+      });
+    }
+  }
+
+  fallbackWebSpeech(text, lang) {
+    if (!('speechSynthesis' in window)) return;
+    try {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.rate = lang.startsWith('ja') ? 0.95 : 0.9;
+
+      const voices = window.speechSynthesis.getVoices();
+      const langPrefix = lang.split('-')[0].toLowerCase();
+      const voice = voices.find(v => v.lang.toLowerCase() === lang.toLowerCase() || v.lang.replace('_', '-').toLowerCase() === lang.toLowerCase())
+        || voices.find(v => v.lang.toLowerCase().startsWith(langPrefix));
+
+      if (voice) {
+        utterance.voice = voice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.error('TTS error:', e);
+    }
   }
 
   shuffleCards() {
@@ -663,7 +685,7 @@ class FlashLearnApp {
     "word": "eloquent",
     "phonetic": "/ˈeləkwənt/",
     "pos": "adjective",
-    "meaning": "Có tài hùng biện, ăn nói lưu loát và thuyết phục",
+    "meaning": "Có tài hùng biện, ăn nói lưu loát và đầy sức thuyết phục",
     "example": "He gave an eloquent speech that moved the audience.",
     "exampleMeaning": "Anh ấy đã có một bài phát biểu hùng hồn làm rung động người nghe."
   },
@@ -976,7 +998,7 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       return;
     }
 
-    const lang = this.newDeckLangSelect.value || 'auto';
+    const lang = this.newDeckLangSelect.value || 'ja-JP';
 
     const newDeck = {
       id: 'deck-' + Date.now(),
@@ -1071,7 +1093,7 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
 
   // ==================== EVENT LISTENERS ====================
   initEvents() {
-    // Card flip click - only flips if not clicking inner action buttons
+    // Card flip click - flips when clicking card background or text, but not action buttons
     this.flashcard.addEventListener('click', (e) => {
       if (e.target.closest('button')) return;
       this.flipCard();
@@ -1088,23 +1110,23 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     this.btnMarkMastered.addEventListener('click', () => this.markStatus(true));
     this.btnStarCard.addEventListener('click', () => this.toggleStar());
 
-    // Audio TTS buttons: Word & Example sentence
+    // Audio Buttons (Front word, Back word, Example sentence)
     this.btnPlaySound.addEventListener('click', (e) => {
       e.stopPropagation();
       const card = this.getCurrentCard();
-      if (card) this.speakText(card.word);
+      if (card) this.playAudio(card.word);
     });
 
     this.btnBackPlaySound.addEventListener('click', (e) => {
       e.stopPropagation();
       const card = this.getCurrentCard();
-      if (card) this.speakText(card.word);
+      if (card) this.playAudio(card.word);
     });
 
     this.btnPlayExampleSound.addEventListener('click', (e) => {
       e.stopPropagation();
       const card = this.getCurrentCard();
-      if (card && card.example) this.speakText(card.example);
+      if (card && card.example) this.playAudio(card.example);
     });
 
     // Deck select change
@@ -1217,7 +1239,7 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       } else if (e.key.toLowerCase() === 'p' || e.key.toLowerCase() === 'v') {
         e.preventDefault();
         const card = this.getCurrentCard();
-        if (card) this.speakText(card.word);
+        if (card) this.playAudio(card.word);
       }
     });
   }

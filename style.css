@@ -3,12 +3,12 @@
    ========================================================= */
 
 :root {
-  --card-height: 400px;
+  --card-height: 420px;
 }
 
 @media (max-width: 640px) {
   :root {
-    --card-height: 360px;
+    --card-height: 380px;
   }
 }
 
