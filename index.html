@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlashLearn - Học Từ Vựng Flashcard Thông Minh</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+          <i data-lucide="layers" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+            FlashLearn
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Thẻ học từ vựng 2 mặt thông minh</p>
+        </div>
+      </div>
+
+      <!-- Center: Deck selector -->
+      <div class="flex items-center gap-2">
+        <div class="relative">
+          <select id="deckSelect" class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium rounded-xl px-3 py-1.5 pr-8 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer appearance-none transition-all">
+            <!-- Populated via JS -->
+          </select>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        </div>
+        <button id="btnManageDecks" title="Quản lý bộ từ vựng" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <i data-lucide="folder-cog" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Right actions -->
+      <div class="flex items-center gap-2">
+        <button id="btnOpenImport" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-500/20 transition active:scale-95">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Thêm từ vựng</span>
+        </button>
+        <button id="btnToggleTheme" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Đổi giao diện Sáng/Tối">
+          <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+          <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-6 flex flex-col justify-between">
+    
+    <!-- Top Bar: Stats, Filter & Mode -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <span id="deckStats" class="font-medium text-slate-700 dark:text-slate-200">0 thẻ</span>
+        <span>•</span>
+        <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">
+          <i data-lucide="check-circle-2" class="w-3 h-3"></i> <span id="masteredCount">0</span> đã thuộc
+        </span>
+        <span class="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full">
+          <i data-lucide="refresh-cw" class="w-3 h-3"></i> <span id="learningCount">0</span> đang học
+        </span>
+      </div>
+
+      <!-- Filter options -->
+      <div class="flex items-center gap-2">
+        <div class="inline-flex bg-slate-200/60 dark:bg-slate-800/80 p-0.5 rounded-lg text-xs font-medium">
+          <button class="filter-tab active px-2.5 py-1 rounded-md transition" data-filter="all">Tất cả</button>
+          <button class="filter-tab px-2.5 py-1 rounded-md transition text-slate-600 dark:text-slate-400" data-filter="learning">Cần ôn</button>
+          <button class="filter-tab px-2.5 py-1 rounded-md transition text-slate-600 dark:text-slate-400" data-filter="starred">Yêu thích ⭐</button>
+        </div>
+        <button id="btnShuffle" title="Xáo trộn thứ tự thẻ" class="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition">
+          <i data-lucide="shuffle" class="w-4 h-4"></i>
+        </button>
+        <button id="btnResetProgress" title="Đặt lại tiến trình bộ thẻ này" class="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden mb-6">
+      <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-violet-500 h-full transition-all duration-300" style="width: 0%"></div>
+    </div>
+
+    <!-- FLASHCARD SCENE -->
+    <div class="flashcard-scene relative my-auto">
+      <div id="flashcard" class="flashcard" role="button" tabindex="0" aria-label="Flashcard: Nhấn để lật">
+        
+        <!-- FRONT FACE -->
+        <div class="card-face card-front bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/60 dark:shadow-none flex flex-col justify-between select-none">
+          
+          <!-- Card Header (Tags & Actions) -->
+          <div class="flex items-center justify-between">
+            <span id="frontPos" class="text-xs uppercase tracking-wider font-bold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+              Vocabulary
+            </span>
+            <div class="flex items-center gap-1.5">
+              <button id="btnStarCard" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-amber-500 transition" title="Đánh dấu sao">
+                <i data-lucide="star" class="w-5 h-5"></i>
+              </button>
+              <button id="btnPlaySound" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 transition" title="Nghe phát âm chuẩn (US/UK)">
+                <i data-lucide="volume-2" class="w-5 h-5"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card Body: Word & Phonetic -->
+          <div class="text-center py-6">
+            <h2 id="frontWord" class="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
+              Loading...
+            </h2>
+            <p id="frontPhonetic" class="font-mono text-base md:text-lg text-indigo-600 dark:text-indigo-400">
+              /ˈloʊdɪŋ/
+            </p>
+            <div id="frontHint" class="mt-4 text-xs text-slate-400 dark:text-slate-500 italic max-w-md mx-auto line-clamp-2 hidden">
+              <!-- Gợi ý ngữ cảnh nếu có -->
+            </div>
+          </div>
+
+          <!-- Card Footer (Flip Prompt) -->
+          <div class="text-center">
+            <div class="inline-flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin-slow"></i>
+              <span>Nhấn vào thẻ hoặc phím <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded text-[10px] font-mono">Space</kbd> để lật mặt sau</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BACK FACE -->
+        <div class="card-face card-back bg-gradient-to-b from-indigo-50/50 to-white dark:from-slate-900 dark:to-slate-900/90 border-2 border-indigo-200 dark:border-indigo-900/70 rounded-3xl p-8 shadow-xl shadow-indigo-100/40 dark:shadow-none flex flex-col justify-between select-none">
+          
+          <!-- Back Header -->
+          <div class="flex items-center justify-between border-b border-indigo-100/60 dark:border-slate-800 pb-3">
+            <div class="flex items-center gap-2">
+              <span id="backWord" class="font-bold text-slate-700 dark:text-slate-200 text-lg">Word</span>
+              <span id="backPos" class="text-xs px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">noun</span>
+            </div>
+            <button id="btnBackPlaySound" class="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 transition" title="Nghe phát âm">
+              <i data-lucide="volume-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Back Main Meaning -->
+          <div class="py-4 my-auto">
+            <div class="mb-4">
+              <span class="text-xs uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 block mb-1">Định nghĩa & Nghĩa tiếng Việt</span>
+              <h3 id="backMeaning" class="text-2xl md:text-3xl font-bold text-indigo-700 dark:text-indigo-300">
+                Nghĩa từ vựng
+              </h3>
+            </div>
+
+            <!-- Example Section -->
+            <div id="exampleBox" class="bg-white/80 dark:bg-slate-800/80 rounded-2xl p-4 border border-indigo-100/80 dark:border-slate-700/80">
+              <span class="text-xs uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500 block mb-1">Ví dụ minh họa:</span>
+              <p id="backExample" class="text-sm md:text-base text-slate-800 dark:text-slate-200 italic mb-1.5 font-medium">
+                "Example sentence appears here."
+              </p>
+              <p id="backExampleMeaning" class="text-xs md:text-sm text-slate-500 dark:text-slate-400">
+                (Dịch nghĩa câu ví dụ)
+              </p>
+            </div>
+          </div>
+
+          <!-- Back Footer: Note or Collocation -->
+          <div class="text-center pt-2">
+            <div class="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+              <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
+              <span>Nhấn lại để xem mặt trước</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Navigation & Rating Controls -->
+    <div class="mt-6 flex flex-col items-center gap-4">
+      
+      <!-- Card index & Navigation -->
+      <div class="flex items-center justify-between w-full max-w-md">
+        <button id="btnPrevCard" class="flex items-center gap-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none shadow-sm">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Trước</span>
+        </button>
+
+        <div class="flex items-center gap-2">
+          <span id="currentCardIndex" class="font-bold text-slate-900 dark:text-white text-base">1</span>
+          <span class="text-slate-400 text-sm">/</span>
+          <span id="totalCardCount" class="text-slate-500 text-sm">1</span>
+        </div>
+
+        <button id="btnNextCard" class="flex items-center gap-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none shadow-sm">
+          <span>Sau</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Quick Learning Assessment Buttons -->
+      <div class="flex items-center gap-3 w-full max-w-md">
+        <button id="btnMarkLearning" class="flex-1 py-3 px-4 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-300/40 dark:border-amber-800/40 font-semibold text-sm flex items-center justify-center gap-2 transition active:scale-95" title="Phím tắt: 1">
+          <i data-lucide="x-circle" class="w-4 h-4"></i>
+          <span>Chưa nhớ (1)</span>
+        </button>
+
+        <button id="btnFlipCenter" class="px-5 py-3 rounded-2xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm flex items-center justify-center gap-2 transition active:scale-95" title="Lật thẻ (Phím Space)">
+          <i data-lucide="rotate-3d" class="w-4 h-4"></i>
+          <span>Lật thẻ</span>
+        </button>
+
+        <button id="btnMarkMastered" class="flex-1 py-3 px-4 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-300/40 dark:border-emerald-800/40 font-semibold text-sm flex items-center justify-center gap-2 transition active:scale-95" title="Phím tắt: 2">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+          <span>Đã nhớ (2)</span>
+        </button>
+      </div>
+
+      <!-- Shortcuts hint -->
+      <div class="hidden sm:flex items-center gap-4 text-xs text-slate-400">
+        <span>Phím tắt: <kbd class="px-1 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">Space</kbd> Lật</span>
+        <span><kbd class="px-1 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">←</kbd> <kbd class="px-1 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">→</kbd> Trước / Sau</span>
+        <span><kbd class="px-1 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">1</kbd> Chưa nhớ</span>
+        <span><kbd class="px-1 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">2</kbd> Đã nhớ</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== MODAL: IMPORT / THÊM TỪ VỰNG ==================== -->
+  <div id="importModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden scale-95 transition-transform duration-200" id="importModalContent">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+            <i data-lucide="import" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-lg text-slate-900 dark:text-white">Thêm từ vựng mới</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Nhập bằng mã AI (JSON/Text) hoặc đọc từ file PDF</p>
+          </div>
+        </div>
+        <button id="btnCloseImport" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Tabs -->
+      <div class="flex border-b border-slate-200 dark:border-slate-800 px-6 bg-slate-50/50 dark:bg-slate-900/50">
+        <button class="import-tab active py-3 px-4 border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 font-semibold text-sm flex items-center gap-2" data-tab="ai-code">
+          <i data-lucide="code" class="w-4 h-4"></i>
+          <span>Dán mã AI / Code</span>
+        </button>
+        <button class="import-tab py-3 px-4 border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium text-sm flex items-center gap-2" data-tab="pdf-file">
+          <i data-lucide="file-text" class="w-4 h-4"></i>
+          <span>Đọc từ file PDF</span>
+        </button>
+        <button class="import-tab py-3 px-4 border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium text-sm flex items-center gap-2" data-tab="ai-prompt">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Mẫu lệnh cho AI 🤖</span>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto flex-1 space-y-4">
+        
+        <!-- Target Deck Selection -->
+        <div class="flex items-center gap-3">
+          <label class="text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">Lưu vào bộ thẻ:</label>
+          <select id="importTargetDeck" class="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+
+        <!-- TAB 1: AI CODE / TEXT -->
+        <div id="tabContentAiCode" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              Dán đoạn mã (JSON hoặc danh sách dòng đơn giản):
+            </label>
+            <button id="btnInsertSampleCode" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-medium">
+              <i data-lucide="file-code-2" class="w-3.5 h-3.5"></i>
+              <span>Dán mã mẫu thử nghiệm</span>
+            </button>
+          </div>
+
+          <textarea id="aiCodeInput" rows="9" placeholder="Dán mã JSON từ vựng hoặc dạng:
+từ vựng | phiên âm | nghĩa | câu ví dụ | dịch câu
+
+Ví dụ:
+resilient | /rɪˈzɪliənt/ | kiên cường, mau hồi phục | She is resilient in the face of adversity. | Cô ấy rất kiên cường khi đối mặt với nghịch cảnh.
+
+Hoặc JSON mảng các object [ { &quot;word&quot;: &quot;...&quot;, &quot;meaning&quot;: &quot;...&quot; } ]" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 font-mono text-xs leading-relaxed focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-800 dark:text-slate-200"></textarea>
+
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            💡 <strong>Mẹo:</strong> Ứng dụng tự động nhận diện cả định dạng <code>JSON</code> chuẩn và định dạng gạch đứng <code>từ | nghĩa | ví dụ</code> hay dấu gạch ngang <code>từ - nghĩa</code>.
+          </p>
+        </div>
+
+        <!-- TAB 2: PDF FILE -->
+        <div id="tabContentPdfFile" class="space-y-4 hidden">
+          <div id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 rounded-2xl p-8 text-center cursor-pointer transition bg-slate-50/50 dark:bg-slate-950/50 flex flex-col items-center justify-center gap-3">
+            <div class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+              <i data-lucide="file-up" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+                Kéo thả file PDF vào đây hoặc <span class="text-indigo-600 dark:text-indigo-400 underline">bấm để chọn file</span>
+              </p>
+              <p class="text-xs text-slate-400 mt-1">Hỗ trợ file PDF tài liệu từ vựng tiếng Anh, IELTS, TOEIC...</p>
+            </div>
+            <input type="file" id="pdfFileInput" accept="application/pdf" class="hidden">
+          </div>
+
+          <div id="pdfParsingStatus" class="hidden p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs flex items-center gap-2">
+            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+            <span id="pdfStatusText">Đang đọc và phân tích nội dung PDF...</span>
+          </div>
+
+          <!-- Preview of parsed PDF items -->
+          <div id="pdfPreviewSection" class="hidden space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Từ vựng trích xuất được (<span id="pdfExtractedCount">0</span> từ):
+              </span>
+              <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Sẵn sàng nhập</span>
+            </div>
+            <div id="pdfItemsList" class="max-h-48 overflow-y-auto space-y-1.5 p-2 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-mono">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: AI PROMPT TEMPLATES -->
+        <div id="tabContentAiPrompt" class="space-y-4 hidden">
+          <div class="p-4 rounded-2xl bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-slate-800 dark:to-slate-800/80 border border-indigo-100 dark:border-slate-700">
+            <h4 class="font-bold text-sm text-indigo-900 dark:text-indigo-300 mb-1 flex items-center gap-1.5">
+              <i data-lucide="bot" class="w-4 h-4"></i>
+              Cách lấy mã code từ vựng bằng AI (ChatGPT, Claude, Gemini,...)
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Bạn chỉ cần sao chép câu lệnh bên dưới, gửi cho AI kèm chủ đề hoặc bài đọc bạn muốn học, AI sẽ xuất mã ra đúng định dạng. Sau đó dán vào tab <strong>"Dán mã AI / Code"</strong> là xong ngay!
+            </p>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Mẫu Prompt yêu cầu sinh mã JSON:</span>
+              <button id="btnCopyPrompt" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span id="copyPromptLabel">Sao chép prompt</span>
+              </button>
+            </div>
+            <pre id="samplePromptText" class="p-3 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs overflow-x-auto whitespace-pre-wrap leading-relaxed select-all">Hãy tạo cho tôi danh sách 15 từ vựng tiếng Anh chủ đề [CHỦ ĐỀ_CỦA_BẠN, ví dụ: IELTS Speaking Part 1 / Công nghệ / Kinh doanh] dưới định dạng JSON sau:
+[
+  {
+    "word": "từ tiếng anh",
+    "phonetic": "/phiên âm IPA/",
+    "pos": "từ loại (noun, verb, adj...)",
+    "meaning": "nghĩa tiếng Việt ngắn gọn, dễ hiểu",
+    "example": "Câu ví dụ tiếng Anh tự nhiên",
+    "exampleMeaning": "Dịch nghĩa câu ví dụ sang tiếng Việt"
+  }
+]
+Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.</pre>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+        <button id="btnCancelImport" class="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-sm font-medium transition">
+          Hủy bỏ
+        </button>
+        <button id="btnSubmitImport" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-500/25 transition active:scale-95 flex items-center gap-2">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Thêm vào bộ thẻ</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: QUẢN LÝ BỘ THẺ ==================== -->
+  <div id="deckModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden scale-95 transition-transform duration-200" id="deckModalContent">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <h3 class="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+          <i data-lucide="folder" class="w-5 h-5 text-indigo-500"></i>
+          <span>Quản lý các bộ từ vựng</span>
+        </h3>
+        <button id="btnCloseDeckModal" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 space-y-4">
+        <!-- Add New Deck Input -->
+        <div class="flex gap-2">
+          <input type="text" id="newDeckNameInput" placeholder="Tên bộ thẻ mới (VD: Từ vựng TOEIC 600+)..." class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <button id="btnCreateDeck" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition active:scale-95">
+            Tạo
+          </button>
+        </div>
+
+        <!-- Decks List -->
+        <div id="deckListItems" class="space-y-2">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Export / Backup All -->
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <button id="btnExportAllJson" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline flex items-center gap-1">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Sao lưu toàn bộ dữ liệu (JSON)</span>
+          </button>
+          <button id="btnResetToDefault" class="text-xs text-rose-500 hover:underline">
+            Khôi phục mặc định
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 max-w-sm bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm font-medium translate-y-16 opacity-0 pointer-events-none transition-all duration-300">
+    <i id="toastIcon" data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+    <span id="toastMessage">Thông báo</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="pdf-parser.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>
