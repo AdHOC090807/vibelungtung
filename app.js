@@ -1,12 +1,88 @@
 /**
  * FlashLearn - Main Application Logic
+ * Supports Multi-language Flashcards (English, Japanese, Korean, Chinese...) with Native TTS
  */
 
-// Initial Sample Deck
+// Initial Sample Decks
 const DEFAULT_DECKS = [
   {
+    id: 'deck-japanese-n5',
+    name: '🇯🇵 Từ vựng Tiếng Nhật N5 - N4 Thông Dụng',
+    lang: 'ja-JP',
+    createdAt: Date.now() - 1000,
+    cards: [
+      {
+        id: 'jp1',
+        word: '桜 (さくら)',
+        phonetic: 'sakura',
+        pos: 'danh từ',
+        meaning: 'Hoa anh đào - biểu tượng mùa xuân của xứ sở mặt trời mọc',
+        example: '春になると、桜の花がとても綺麗に咲きます。',
+        exampleMeaning: 'Khi mùa xuân đến, hoa anh đào nở rất đẹp.',
+        mastered: false,
+        starred: true
+      },
+      {
+        id: 'jp2',
+        word: '食べる (たべる)',
+        phonetic: 'taberu',
+        pos: 'động từ nhóm 2',
+        meaning: 'Ăn (dùng bữa)',
+        example: '毎日朝ごはんをちゃんと食べます。',
+        exampleMeaning: 'Mỗi ngày tôi đều ăn sáng đầy đủ.',
+        mastered: false,
+        starred: false
+      },
+      {
+        id: 'jp3',
+        word: '勉強 (べんきょう)',
+        phonetic: 'benkyou',
+        pos: 'danh từ / động từ',
+        meaning: 'Học tập, việc học',
+        example: '日本語の勉強はとても面白いです。',
+        exampleMeaning: 'Việc học tiếng Nhật rất thú vị.',
+        mastered: true,
+        starred: false
+      },
+      {
+        id: 'jp4',
+        word: '素晴らしい (すばらしい)',
+        phonetic: 'subarashii',
+        pos: 'tính từ đuôi い',
+        meaning: 'Tuyệt vời, xuất sắc, tráng lệ',
+        example: '富士山の景色は本当に素晴らしいですね。',
+        exampleMeaning: 'Phong cảnh núi Phú Sĩ thật sự rất tuyệt vời.',
+        mastered: false,
+        starred: true
+      },
+      {
+        id: 'jp5',
+        word: '感謝 (かんしゃ)',
+        phonetic: 'kansha',
+        pos: 'danh từ / động từ',
+        meaning: 'Biết ơn, lòng cảm tạ',
+        example: 'いつも助けてくれて心から感謝しています。',
+        exampleMeaning: 'Tôi luôn ghi lòng biết ơn bạn vì đã luôn giúp đỡ tôi.',
+        mastered: false,
+        starred: false
+      },
+      {
+        id: 'jp6',
+        word: '一期一会 (いちごいちえ)',
+        phonetic: 'ichigo ichie',
+        pos: 'thành ngữ',
+        meaning: 'Nhất kỳ nhất hội (mỗi cuộc gặp gỡ trong đời chỉ có một lần, hãy trân trọng)',
+        example: '人との出会いを一期一会として大切にしたい。',
+        exampleMeaning: 'Tôi muốn trân trọng từng cuộc gặp gỡ như một duyên lành chỉ có một lần trong đời.',
+        mastered: false,
+        starred: true
+      }
+    ]
+  },
+  {
     id: 'deck-ielts-core',
-    name: '🌟 Từ vựng IELTS & Giao tiếp cốt lõi',
+    name: '🇬🇧 Từ vựng IELTS & Giao tiếp Cốt Lõi',
+    lang: 'en-US',
     createdAt: Date.now(),
     cards: [
       {
@@ -44,17 +120,6 @@ const DEFAULT_DECKS = [
       },
       {
         id: 'c4',
-        word: 'scrutinize',
-        phonetic: '/ˈskruːtənaɪz/',
-        pos: 'verb',
-        meaning: 'Xem xét kỹ lưỡng, soi xét cẩn thận từng chi tiết',
-        example: 'The committee will scrutinize every aspect of the proposal.',
-        exampleMeaning: 'Ủy ban sẽ kiểm tra kỹ lưỡng từng khía cạnh của đề xuất.',
-        mastered: false,
-        starred: false
-      },
-      {
-        id: 'c5',
         word: 'ubiquitous',
         phonetic: '/juːˈbɪkwɪtəs/',
         pos: 'adjective',
@@ -62,38 +127,16 @@ const DEFAULT_DECKS = [
         example: 'Smartphones have become ubiquitous in modern society.',
         exampleMeaning: 'Điện thoại thông minh đã trở nên phổ biến ở khắp mọi nơi trong xã hội hiện đại.',
         mastered: true,
-        starred: true
+        starred: false
       },
       {
-        id: 'c6',
+        id: 'c5',
         word: 'meticulous',
         phonetic: '/məˈtɪkjələs/',
         pos: 'adjective',
         meaning: 'Tỉ mỉ, cẩn thận, chăm chút từng li từng tí',
         example: 'He is meticulous about keeping his records up to date.',
         exampleMeaning: 'Anh ấy rất tỉ mỉ trong việc cập nhật hồ sơ của mình thường xuyên.',
-        mastered: false,
-        starred: false
-      },
-      {
-        id: 'c7',
-        word: 'lucrative',
-        phonetic: '/ˈluːkrətɪv/',
-        pos: 'adjective',
-        meaning: 'Sinh lợi cao, mang lại nhiều tiền bạc lợi nhuận',
-        example: 'E-commerce has become a highly lucrative industry in recent years.',
-        exampleMeaning: 'Thương mại điện tử đã trở thành một ngành công nghiệp vô cùng sinh lợi trong những năm gần đây.',
-        mastered: false,
-        starred: false
-      },
-      {
-        id: 'c8',
-        word: 'mitigate',
-        phonetic: '/ˈmɪtɪɡeɪt/',
-        pos: 'verb',
-        meaning: 'Giảm nhẹ, làm dịu bớt (tác hại, rủi ro, nỗi đau)',
-        example: 'New drainage systems were built to mitigate the risk of flooding.',
-        exampleMeaning: 'Hệ thống thoát nước mới được xây dựng để giảm nhẹ nguy cơ ngập lụt.',
         mastered: false,
         starred: false
       }
@@ -103,7 +146,7 @@ const DEFAULT_DECKS = [
 
 class FlashLearnApp {
   constructor() {
-    this.storageKey = 'flashlearn_app_data_v1';
+    this.storageKey = 'flashlearn_app_data_v2';
     this.decks = [];
     this.currentDeckId = null;
     this.currentCardIndex = 0;
@@ -115,6 +158,7 @@ class FlashLearnApp {
     this.loadData();
     this.initEvents();
     this.initTheme();
+    this.initVoices();
     this.render();
   }
 
@@ -137,6 +181,7 @@ class FlashLearnApp {
     // Card Elements
     this.flashcard = document.getElementById('flashcard');
     this.frontPos = document.getElementById('frontPos');
+    this.frontLangBadge = document.getElementById('frontLangBadge');
     this.btnStarCard = document.getElementById('btnStarCard');
     this.btnPlaySound = document.getElementById('btnPlaySound');
     this.frontWord = document.getElementById('frontWord');
@@ -151,6 +196,7 @@ class FlashLearnApp {
     this.backExample = document.getElementById('backExample');
     this.backExampleMeaning = document.getElementById('backExampleMeaning');
     this.exampleBox = document.getElementById('exampleBox');
+    this.btnPlayExampleSound = document.getElementById('btnPlayExampleSound');
 
     // Controls
     this.btnPrevCard = document.getElementById('btnPrevCard');
@@ -172,7 +218,8 @@ class FlashLearnApp {
     this.tabContentAiPrompt = document.getElementById('tabContentAiPrompt');
     this.importTargetDeck = document.getElementById('importTargetDeck');
     this.aiCodeInput = document.getElementById('aiCodeInput');
-    this.btnInsertSampleCode = document.getElementById('btnInsertSampleCode');
+    this.btnInsertSampleEnglish = document.getElementById('btnInsertSampleEnglish');
+    this.btnInsertSampleJapanese = document.getElementById('btnInsertSampleJapanese');
     this.dropZone = document.getElementById('dropZone');
     this.pdfFileInput = document.getElementById('pdfFileInput');
     this.pdfParsingStatus = document.getElementById('pdfParsingStatus');
@@ -180,6 +227,11 @@ class FlashLearnApp {
     this.pdfPreviewSection = document.getElementById('pdfPreviewSection');
     this.pdfExtractedCount = document.getElementById('pdfExtractedCount');
     this.pdfItemsList = document.getElementById('pdfItemsList');
+
+    // Prompt Switcher
+    this.btnPromptLangEn = document.getElementById('btnPromptLangEn');
+    this.btnPromptLangJp = document.getElementById('btnPromptLangJp');
+    this.promptTitleLabel = document.getElementById('promptTitleLabel');
     this.btnCopyPrompt = document.getElementById('btnCopyPrompt');
     this.copyPromptLabel = document.getElementById('copyPromptLabel');
     this.samplePromptText = document.getElementById('samplePromptText');
@@ -188,6 +240,7 @@ class FlashLearnApp {
     this.deckModal = document.getElementById('deckModal');
     this.btnCloseDeckModal = document.getElementById('btnCloseDeckModal');
     this.newDeckNameInput = document.getElementById('newDeckNameInput');
+    this.newDeckLangSelect = document.getElementById('newDeckLangSelect');
     this.btnCreateDeck = document.getElementById('btnCreateDeck');
     this.deckListItems = document.getElementById('deckListItems');
     this.btnExportAllJson = document.getElementById('btnExportAllJson');
@@ -196,6 +249,14 @@ class FlashLearnApp {
     // Toast
     this.toast = document.getElementById('toast');
     this.toastMessage = document.getElementById('toastMessage');
+  }
+
+  initVoices() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        // Cached in browser
+      };
+    }
   }
 
   loadData() {
@@ -232,7 +293,7 @@ class FlashLearnApp {
     this.decks.forEach(deck => {
       const opt = document.createElement('option');
       opt.value = deck.id;
-      opt.textContent = `${deck.name} (${deck.cards.length} từ)`;
+      opt.textContent = `${deck.name} (${deck.cards.length})`;
       if (deck.id === this.currentDeckId) opt.selected = true;
       this.deckSelect.appendChild(opt);
 
@@ -273,6 +334,37 @@ class FlashLearnApp {
     return cards[this.currentCardIndex];
   }
 
+  // Detect language of word: Japanese, Korean, Chinese, or English
+  detectLanguage(text) {
+    if (!text) return 'en-US';
+    // Japanese: Hiragana, Katakana, or typical Japanese Kanji
+    if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) {
+      return 'ja-JP';
+    }
+    // Korean: Hangul
+    if (/[\uAC00-\uD7A3\u1100-\u11FF]/.test(text)) {
+      return 'ko-KR';
+    }
+    // Kanji / CJK ideographs
+    if (/[\u4E00-\u9FFF]/.test(text)) {
+      const deck = this.getCurrentDeck();
+      if (deck && deck.lang && deck.lang !== 'auto') return deck.lang;
+      return 'ja-JP'; // Default Kanji to Japanese
+    }
+    return 'en-US';
+  }
+
+  cleanTextForSpeech(text, lang) {
+    if (!text) return '';
+    // If Japanese and contains reading in parentheses like "桜 (さくら)"
+    const jpMatch = text.match(/\(([\u3040-\u309F\u30A0-\u30FF]+)\)/);
+    if (lang === 'ja-JP' && jpMatch) {
+      return jpMatch[1]; // speak the kana reading directly
+    }
+    // Remove parentheses and slashes
+    return text.replace(/[\(\)\[\]\/]/g, ' ').trim();
+  }
+
   render() {
     const deck = this.getCurrentDeck();
     if (!deck) return;
@@ -306,11 +398,28 @@ class FlashLearnApp {
       return;
     }
 
-    // Front
+    const cardLang = deck.lang && deck.lang !== 'auto' ? deck.lang : this.detectLanguage(currentCard.word);
+
+    // Front Face
     this.frontWord.textContent = currentCard.word || 'Chưa có từ';
     this.frontPhonetic.textContent = currentCard.phonetic || '';
     this.frontPhonetic.style.display = currentCard.phonetic ? 'block' : 'none';
     this.frontPos.textContent = currentCard.pos || 'vocabulary';
+
+    // Lang badge
+    if (cardLang.startsWith('ja')) {
+      this.frontLangBadge.textContent = '🇯🇵 JP';
+      this.frontLangBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400';
+    } else if (cardLang.startsWith('ko')) {
+      this.frontLangBadge.textContent = '🇰🇷 KR';
+      this.frontLangBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400';
+    } else if (cardLang.startsWith('zh')) {
+      this.frontLangBadge.textContent = '🇨🇳 CN';
+      this.frontLangBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400';
+    } else {
+      this.frontLangBadge.textContent = '🇬🇧 EN';
+      this.frontLangBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400';
+    }
 
     // Star icon
     const starIcon = this.btnStarCard.querySelector('i');
@@ -318,7 +427,6 @@ class FlashLearnApp {
       if (currentCard.starred) {
         this.btnStarCard.classList.add('text-amber-500');
         this.btnStarCard.classList.remove('text-slate-400');
-        starIcon.setAttribute('data-lucide', 'star');
         starIcon.classList.add('fill-amber-400');
       } else {
         this.btnStarCard.classList.remove('text-amber-500');
@@ -327,7 +435,7 @@ class FlashLearnApp {
       }
     }
 
-    // Back
+    // Back Face
     this.backWord.textContent = currentCard.word;
     this.backPos.textContent = currentCard.pos || 'vocabulary';
     this.backMeaning.textContent = currentCard.meaning || '(Chưa có giải nghĩa)';
@@ -340,11 +448,11 @@ class FlashLearnApp {
       this.exampleBox.classList.add('hidden');
     }
 
-    // Flip state reset
-    if (!this.isFlipped) {
-      this.flashcard.classList.remove('is-flipped');
-    } else {
+    // Flip state synchronization
+    if (this.isFlipped) {
       this.flashcard.classList.add('is-flipped');
+    } else {
+      this.flashcard.classList.remove('is-flipped');
     }
 
     lucide.createIcons();
@@ -354,7 +462,8 @@ class FlashLearnApp {
     this.frontWord.textContent = 'Trống';
     this.frontPhonetic.textContent = 'Không có thẻ nào trong bộ lọc này';
     this.frontPos.textContent = 'empty';
-    this.backMeaning.textContent = 'Hãy thêm từ vựng mới hoặc chuyển bộ lọc khác!';
+    this.frontLangBadge.textContent = '--';
+    this.backMeaning.textContent = 'Hãy thêm từ vựng mới hoặc chuyển sang bộ lọc khác!';
     this.exampleBox.classList.add('hidden');
     this.flashcard.classList.remove('is-flipped');
     this.isFlipped = false;
@@ -369,14 +478,24 @@ class FlashLearnApp {
     }
   }
 
+  resetFlipWithoutAnimation() {
+    this.isFlipped = false;
+    this.flashcard.style.transition = 'none';
+    this.flashcard.classList.remove('is-flipped');
+    // Force DOM reflow to apply instant transform
+    void this.flashcard.offsetWidth;
+    setTimeout(() => {
+      this.flashcard.style.transition = '';
+    }, 50);
+  }
+
   nextCard() {
     const cards = this.getFilteredCards();
     if (this.currentCardIndex < cards.length - 1) {
+      this.resetFlipWithoutAnimation();
       this.currentCardIndex++;
-      this.isFlipped = false;
       this.render();
     } else if (cards.length > 0 && this.currentCardIndex === cards.length - 1) {
-      // Completed all cards in filter
       this.triggerConfetti();
       this.showToast('🎉 Tuyệt vời! Bạn đã xem hết tất cả các thẻ trong phần này.');
     }
@@ -384,8 +503,8 @@ class FlashLearnApp {
 
   prevCard() {
     if (this.currentCardIndex > 0) {
+      this.resetFlipWithoutAnimation();
       this.currentCardIndex--;
-      this.isFlipped = false;
       this.render();
     }
   }
@@ -398,9 +517,9 @@ class FlashLearnApp {
     this.saveData();
 
     if (isMastered) {
-      this.showToast(`✅ Đã đánh dấu nhớ: "${card.word}"`);
+      this.showToast(`✅ Đã nhớ: "${card.word}"`);
     } else {
-      this.showToast(`📌 Đã đưa "${card.word}" vào danh sách cần ôn`);
+      this.showToast(`📌 Đã chuyển "${card.word}" vào danh sách cần ôn`);
     }
 
     this.nextCard();
@@ -416,28 +535,40 @@ class FlashLearnApp {
     this.showToast(card.starred ? '⭐ Đã thêm vào mục Yêu thích' : 'Đã bỏ yêu thích');
   }
 
-  speakCurrentWord() {
-    const card = this.getCurrentCard();
-    if (!card || !card.word) return;
+  // TTS with Japanese, English and multi-language support
+  speakText(rawText, explicitLang = null) {
+    if (!rawText) return;
 
     if (!('speechSynthesis' in window)) {
-      this.showToast('Trình duyệt của bạn không hỗ trợ phát âm TTS');
+      this.showToast('Trình duyệt của bạn không hỗ trợ phát âm TTS', true);
       return;
     }
 
-    window.speechSynthesis.cancel(); // Stop any pending speech
-    const utterance = new SpeechSynthesisUtterance(card.word);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.9; // Slightly slower for clear pronunciation
+    window.speechSynthesis.cancel(); // Stop pending sounds
 
-    // Find English voice
+    const deck = this.getCurrentDeck();
+    let lang = explicitLang || (deck && deck.lang && deck.lang !== 'auto' ? deck.lang : this.detectLanguage(rawText));
+
+    const clean = this.cleanTextForSpeech(rawText, lang);
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = lang;
+    utterance.rate = lang.startsWith('ja') ? 0.95 : 0.9;
+
+    // Match voice in browser
     const voices = window.speechSynthesis.getVoices();
-    const englishVoice = voices.find(v => v.lang.startsWith('en-') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('US')));
-    if (englishVoice) {
-      utterance.voice = englishVoice;
+    const langPrefix = lang.split('-')[0].toLowerCase();
+
+    const voice = voices.find(v => v.lang.toLowerCase() === lang.toLowerCase() || v.lang.replace('_', '-').toLowerCase() === lang.toLowerCase())
+      || voices.find(v => v.lang.toLowerCase().startsWith(langPrefix));
+
+    if (voice) {
+      utterance.voice = voice;
     }
 
     window.speechSynthesis.speak(utterance);
+
+    const langLabel = lang.startsWith('ja') ? 'Tiếng Nhật 🇯🇵' : (lang.startsWith('en') ? 'Tiếng Anh 🇬🇧' : lang);
+    this.showToast(`🔊 Đang phát âm: ${langLabel}`);
   }
 
   shuffleCards() {
@@ -449,8 +580,8 @@ class FlashLearnApp {
       [deck.cards[i], deck.cards[j]] = [deck.cards[j], deck.cards[i]];
     }
 
+    this.resetFlipWithoutAnimation();
     this.currentCardIndex = 0;
-    this.isFlipped = false;
     this.saveData();
     this.render();
     this.showToast('🔀 Đã xáo trộn ngẫu nhiên thứ tự các thẻ!');
@@ -462,8 +593,8 @@ class FlashLearnApp {
 
     if (confirm(`Bạn có chắc muốn đặt lại trạng thái học của bộ thẻ "${deck.name}" về ban đầu?`)) {
       deck.cards.forEach(c => c.mastered = false);
+      this.resetFlipWithoutAnimation();
       this.currentCardIndex = 0;
-      this.isFlipped = false;
       this.saveData();
       this.render();
       this.showToast('🔄 Đã đặt lại toàn bộ tiến trình học!');
@@ -526,7 +657,7 @@ class FlashLearnApp {
     lucide.createIcons();
   }
 
-  insertSampleCode() {
+  insertSampleEnglish() {
     const sample = `[
   {
     "word": "eloquent",
@@ -543,18 +674,77 @@ class FlashLearnApp {
     "meaning": "Sự kiên trì, bền bỉ vượt qua khó khăn để đạt mục tiêu",
     "example": "Success usually requires years of hard work and perseverance.",
     "exampleMeaning": "Thành công thường đòi hỏi nhiều năm nỗ lực và sự kiên trì."
-  },
-  {
-    "word": "spontaneous",
-    "phonetic": "/spɑːnˈteɪniəs/",
-    "pos": "adjective",
-    "meaning": "Tự phát, ngẫu hứng, không lên kế hoạch trước",
-    "example": "We made a spontaneous decision to go on a road trip.",
-    "exampleMeaning": "Chúng tôi đã đưa ra quyết định ngẫu hứng đi du lịch bằng ô tô."
   }
 ]`;
     this.aiCodeInput.value = sample;
-    this.showToast('Đã dán mẫu code JSON thử nghiệm!');
+    this.showToast('Đã dán mẫu code Tiếng Anh!');
+  }
+
+  insertSampleJapanese() {
+    const sample = `[
+  {
+    "word": "木漏れ日 (こもれび)",
+    "phonetic": "komorebi",
+    "pos": "danh từ",
+    "meaning": "Ánh nắng len lỏi qua kẽ lá",
+    "example": "森の中を歩きながら、木漏れ日を楽しんだ。",
+    "exampleMeaning": "Vừa đi dạo trong rừng, vừa tận hưởng ánh nắng len lỏi qua kẽ lá."
+  },
+  {
+    "word": "懐かしい (なつかしい)",
+    "phonetic": "natsukashii",
+    "pos": "tính từ đuôi い",
+    "meaning": "Hoài niệm, gợi nhớ kỷ niệm xưa êm đềm",
+    "example": "この曲を聞くと、子どもの頃が懐かしい。",
+    "exampleMeaning": "Mỗi khi nghe bài hát này, tôi lại nhớ về thời thơ ấu."
+  },
+  {
+    "word": "一生懸命 (いっしょうけんめい)",
+    "phonetic": "isshoukenmei",
+    "pos": "phó từ / danh từ",
+    "meaning": "Cố gắng hết sức mình, dốc toàn lực",
+    "example": "夢を叶えるために、一生懸命頑張ります。",
+    "exampleMeaning": "Để biến ước mơ thành hiện thực, tôi sẽ cố gắng hết sức mình."
+  }
+]`;
+    this.aiCodeInput.value = sample;
+    this.showToast('Đã dán mẫu code Tiếng Nhật 🇯🇵!');
+  }
+
+  setPromptTemplate(lang) {
+    if (lang === 'jp') {
+      this.btnPromptLangJp.className = 'px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center gap-1 transition';
+      this.btnPromptLangEn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 transition flex items-center gap-1';
+      this.promptTitleLabel.textContent = 'Mẫu Prompt Tiếng Nhật (JLPT / Giao tiếp):';
+      this.samplePromptText.textContent = `Hãy tạo cho tôi danh sách 15 từ vựng tiếng Nhật chủ đề [CHỦ ĐỀ BẠN MUỐN, VD: JLPT N5-N4 / Giao tiếp quán ăn / Công việc] dưới định dạng JSON sau:
+[
+  {
+    "word": "Từ Kanji kèm cách đọc trong ngoặc, ví dụ: 桜 (さくら)",
+    "phonetic": "cách đọc Romaji hoặc Hiragana",
+    "pos": "từ loại (danh từ, động từ nhóm 1...)",
+    "meaning": "nghĩa tiếng Việt ngắn gọn, dễ nhớ",
+    "example": "Câu ví dụ tiếng Nhật tự nhiên",
+    "exampleMeaning": "Dịch nghĩa câu ví dụ sang tiếng Việt"
+  }
+]
+Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
+    } else {
+      this.btnPromptLangEn.className = 'px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center gap-1 transition';
+      this.btnPromptLangJp.className = 'px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 transition flex items-center gap-1';
+      this.promptTitleLabel.textContent = 'Mẫu Prompt Tiếng Anh:';
+      this.samplePromptText.textContent = `Hãy tạo cho tôi danh sách 15 từ vựng tiếng Anh chủ đề [CHỦ ĐỀ_CỦA_BẠN, ví dụ: IELTS Speaking / Công nghệ / Du lịch] dưới định dạng JSON sau:
+[
+  {
+    "word": "từ tiếng anh",
+    "phonetic": "/phiên âm IPA/",
+    "pos": "từ loại (noun, verb, adj...)",
+    "meaning": "nghĩa tiếng Việt ngắn gọn, dễ hiểu",
+    "example": "Câu ví dụ tiếng Anh tự nhiên",
+    "exampleMeaning": "Dịch nghĩa câu ví dụ sang tiếng Việt"
+  }
+]
+Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
+    }
   }
 
   copyPromptText() {
@@ -564,16 +754,15 @@ class FlashLearnApp {
       setTimeout(() => {
         this.copyPromptLabel.textContent = 'Sao chép prompt';
       }, 2000);
-      this.showToast('📋 Đã sao chép prompt! Giờ bạn có thể dán vào ChatGPT / Gemini.');
+      this.showToast('📋 Đã sao chép prompt! Bạn dán vào ChatGPT / Gemini nhé.');
     });
   }
 
-  // Parse Text / JSON from AI Code input
   parseInputCode(raw) {
     const text = raw.trim();
     if (!text) return [];
 
-    // Check if JSON
+    // Parse JSON
     if (text.startsWith('[') || text.startsWith('{')) {
       try {
         const parsed = JSON.parse(text);
@@ -581,7 +770,7 @@ class FlashLearnApp {
         return list.map((item, idx) => ({
           id: 'card-' + Date.now() + '-' + idx,
           word: item.word || item.vocab || item.term || '',
-          phonetic: item.phonetic || item.ipa || item.pronunciation || '',
+          phonetic: item.phonetic || item.ipa || item.romaji || item.pronunciation || '',
           pos: item.pos || item.type || '',
           meaning: item.meaning || item.definition || item.vietnamese || '',
           example: item.example || item.sentence || '',
@@ -590,7 +779,6 @@ class FlashLearnApp {
           starred: false
         })).filter(c => c.word && c.meaning);
       } catch (err) {
-        // Fallback to text parsing if JSON parse failed
         console.warn('JSON parse error, attempting line-based parse:', err);
       }
     }
@@ -606,9 +794,9 @@ class FlashLearnApp {
           cards.push({
             id: 'card-' + Date.now() + '-' + idx,
             word: parts[0],
-            phonetic: parts.length > 2 && parts[1].startsWith('/') ? parts[1] : '',
+            phonetic: parts.length > 2 && (parts[1].startsWith('/') || /^[a-zA-Z\s]+$/.test(parts[1])) ? parts[1] : '',
             pos: '',
-            meaning: parts.length > 2 && !parts[1].startsWith('/') ? parts[1] : (parts.length > 2 ? parts[2] : parts[1]),
+            meaning: parts.length > 2 && (parts[1].startsWith('/') || /^[a-zA-Z\s]+$/.test(parts[1])) ? parts[2] : parts[1],
             example: parts.length >= 4 ? parts[3] : '',
             exampleMeaning: parts.length >= 5 ? parts[4] : '',
             mastered: false,
@@ -663,7 +851,7 @@ class FlashLearnApp {
       this.pdfParsingStatus.classList.add('hidden');
 
       if (this.parsedPdfCards.length === 0) {
-        this.showToast('Không tự động nhận diện được danh sách từ vựng trong PDF. Bạn hãy copy text và dán qua tab "Dán mã AI" nhé!', true);
+        this.showToast('Không tự động nhận diện được từ vựng. Bạn hãy copy text rồi dán qua tab "Dán mã AI" nhé!', true);
         return;
       }
 
@@ -700,6 +888,7 @@ class FlashLearnApp {
       targetDeck = {
         id: 'deck-' + Date.now(),
         name: name.trim(),
+        lang: 'auto',
         createdAt: Date.now(),
         cards: []
       };
@@ -709,7 +898,6 @@ class FlashLearnApp {
 
     let newCards = [];
 
-    // Check which tab is active or which input has data
     const isPdfActive = !this.tabContentPdfFile.classList.contains('hidden');
     if (isPdfActive && this.parsedPdfCards.length > 0) {
       newCards = this.parsedPdfCards;
@@ -725,8 +913,8 @@ class FlashLearnApp {
 
     targetDeck.cards.push(...newCards);
     this.currentDeckId = targetDeck.id;
+    this.resetFlipWithoutAnimation();
     this.currentCardIndex = Math.max(0, targetDeck.cards.length - newCards.length);
-    this.isFlipped = false;
 
     this.saveData();
     this.populateDeckSelectors();
@@ -755,10 +943,15 @@ class FlashLearnApp {
   }
 
   renderDeckListModal() {
-    this.deckListItems.innerHTML = this.decks.map(deck => `
+    this.deckListItems.innerHTML = this.decks.map(deck => {
+      const langIcon = deck.lang === 'ja-JP' ? '🇯🇵' : (deck.lang === 'en-US' ? '🇬🇧' : (deck.lang === 'ko-KR' ? '🇰🇷' : '🌐'));
+      return `
       <div class="flex items-center justify-between p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60">
         <div class="flex-1 mr-3">
-          <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">${deck.name}</h4>
+          <div class="flex items-center gap-1.5">
+            <span>${langIcon}</span>
+            <h4 class="font-bold text-sm text-slate-800 dark:text-slate-200">${deck.name}</h4>
+          </div>
           <span class="text-xs text-slate-400">${deck.cards.length} thẻ • ${deck.cards.filter(c => c.mastered).length} đã thuộc</span>
         </div>
         <div class="flex items-center gap-1">
@@ -772,7 +965,7 @@ class FlashLearnApp {
           ` : ''}
         </div>
       </div>
-    `).join('');
+    `;}).join('');
     lucide.createIcons();
   }
 
@@ -783,17 +976,20 @@ class FlashLearnApp {
       return;
     }
 
+    const lang = this.newDeckLangSelect.value || 'auto';
+
     const newDeck = {
       id: 'deck-' + Date.now(),
       name: name,
+      lang: lang,
       createdAt: Date.now(),
       cards: []
     };
 
     this.decks.push(newDeck);
     this.currentDeckId = newDeck.id;
+    this.resetFlipWithoutAnimation();
     this.currentCardIndex = 0;
-    this.isFlipped = false;
     this.newDeckNameInput.value = '';
 
     this.saveData();
@@ -805,8 +1001,8 @@ class FlashLearnApp {
 
   selectDeckFromModal(deckId) {
     this.currentDeckId = deckId;
+    this.resetFlipWithoutAnimation();
     this.currentCardIndex = 0;
-    this.isFlipped = false;
     this.populateDeckSelectors();
     this.render();
     this.closeDeckModal();
@@ -820,8 +1016,8 @@ class FlashLearnApp {
       this.decks = this.decks.filter(d => d.id !== deckId);
       if (this.currentDeckId === deckId) {
         this.currentDeckId = this.decks[0].id;
+        this.resetFlipWithoutAnimation();
         this.currentCardIndex = 0;
-        this.isFlipped = false;
       }
       this.saveData();
       this.populateDeckSelectors();
@@ -846,8 +1042,8 @@ class FlashLearnApp {
     if (confirm('Khôi phục về bộ từ vựng mặc định ban đầu? Tất cả các từ đã thêm sẽ bị đặt lại.')) {
       this.decks = JSON.parse(JSON.stringify(DEFAULT_DECKS));
       this.currentDeckId = this.decks[0].id;
+      this.resetFlipWithoutAnimation();
       this.currentCardIndex = 0;
-      this.isFlipped = false;
       this.saveData();
       this.populateDeckSelectors();
       this.renderDeckListModal();
@@ -875,9 +1071,8 @@ class FlashLearnApp {
 
   // ==================== EVENT LISTENERS ====================
   initEvents() {
-    // Card flip click
+    // Card flip click - only flips if not clicking inner action buttons
     this.flashcard.addEventListener('click', (e) => {
-      // Don't flip if clicking interactive buttons inside card
       if (e.target.closest('button')) return;
       this.flipCard();
     });
@@ -893,21 +1088,30 @@ class FlashLearnApp {
     this.btnMarkMastered.addEventListener('click', () => this.markStatus(true));
     this.btnStarCard.addEventListener('click', () => this.toggleStar());
 
-    // Audio TTS buttons
+    // Audio TTS buttons: Word & Example sentence
     this.btnPlaySound.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.speakCurrentWord();
+      const card = this.getCurrentCard();
+      if (card) this.speakText(card.word);
     });
+
     this.btnBackPlaySound.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.speakCurrentWord();
+      const card = this.getCurrentCard();
+      if (card) this.speakText(card.word);
+    });
+
+    this.btnPlayExampleSound.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = this.getCurrentCard();
+      if (card && card.example) this.speakText(card.example);
     });
 
     // Deck select change
     this.deckSelect.addEventListener('change', (e) => {
       this.currentDeckId = e.target.value;
+      this.resetFlipWithoutAnimation();
       this.currentCardIndex = 0;
-      this.isFlipped = false;
       this.render();
     });
 
@@ -922,8 +1126,8 @@ class FlashLearnApp {
         this.filterTabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         this.activeFilter = tab.dataset.filter;
+        this.resetFlipWithoutAnimation();
         this.currentCardIndex = 0;
-        this.isFlipped = false;
         this.render();
       });
     });
@@ -938,7 +1142,11 @@ class FlashLearnApp {
       tab.addEventListener('click', () => this.switchImportTab(tab.dataset.tab));
     });
 
-    this.btnInsertSampleCode.addEventListener('click', () => this.insertSampleCode());
+    this.btnInsertSampleEnglish.addEventListener('click', () => this.insertSampleEnglish());
+    this.btnInsertSampleJapanese.addEventListener('click', () => this.insertSampleJapanese());
+
+    this.btnPromptLangEn.addEventListener('click', () => this.setPromptTemplate('en'));
+    this.btnPromptLangJp.addEventListener('click', () => this.setPromptTemplate('jp'));
     this.btnCopyPrompt.addEventListener('click', () => this.copyPromptText());
 
     // PDF Drag & Drop and file picking
@@ -984,7 +1192,6 @@ class FlashLearnApp {
 
     // KEYBOARD SHORTCUTS
     window.addEventListener('keydown', (e) => {
-      // Don't capture keyboard shortcuts when user is typing in inputs or textareas
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
         return;
       }
@@ -1009,7 +1216,8 @@ class FlashLearnApp {
         this.toggleStar();
       } else if (e.key.toLowerCase() === 'p' || e.key.toLowerCase() === 'v') {
         e.preventDefault();
-        this.speakCurrentWord();
+        const card = this.getCurrentCard();
+        if (card) this.speakText(card.word);
       }
     });
   }
