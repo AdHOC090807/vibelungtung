@@ -42,6 +42,7 @@
 }
 
 /* Card Faces - Absolute positioning & 3D backface handling */
+/* NOTE: Never apply overflow or filter to .card-face or .flashcard, as it flattens 3D context in Chrome/Safari */
 .card-face {
   position: absolute;
   top: 0;
@@ -54,8 +55,7 @@
   -webkit-backface-visibility: hidden;
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  transition: box-shadow 0.3s ease;
 }
 
 /* Front Face */
@@ -66,7 +66,7 @@
   pointer-events: auto;
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.15s ease 0.25s, visibility 0s linear 0s;
+  transition: opacity 0.15s ease 0.25s, visibility 0s linear 0s, box-shadow 0.3s ease;
 }
 
 /* Back Face */
@@ -77,7 +77,7 @@
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.15s ease 0.25s, visibility 0s linear 0.25s;
+  transition: opacity 0.15s ease 0.25s, visibility 0s linear 0.25s, box-shadow 0.3s ease;
 }
 
 /* Flipped State Transitions: Guarantees zero bleed-through across ALL browsers */
@@ -97,9 +97,9 @@
   transition: opacity 0.15s ease 0.25s, visibility 0s linear 0s;
 }
 
-/* Card hover slight lift */
-.flashcard:hover {
-  filter: drop-shadow(0 15px 25px rgba(99, 102, 241, 0.15));
+/* Card hover: Use box-shadow on .card-face, NEVER use filter: drop-shadow on 3D elements! */
+.flashcard:hover .card-face {
+  box-shadow: 0 20px 30px -5px rgba(99, 102, 241, 0.25), 0 10px 15px -3px rgba(99, 102, 241, 0.15);
 }
 
 /* Custom button active state */
