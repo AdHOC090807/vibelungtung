@@ -60,14 +60,14 @@ const PDFParser = {
     // Pattern 4: Tab or multiple spaces separated
 
     const delimiterRegex = /[\t|]/;
-    const colonHyphenRegex = /^(\d+[\.\/\)]\s*)?([a-zA-Z\s\-'\(\)]+?)(?:\s*[\/\[](.+?)[\/\]])?\s*[:\-–—]\s*(.+)$/;
+    const colonHyphenRegex = /^(\d+[\.\/\)]\s*)?([^:\-–—\n\|]+?)(?:\s*[\/\[](.+?)[\/\]])?\s*[:\-–—]\s*(.+)$/;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
       // Skip common PDF headers/footers
       if (/^(page\s*\d+|trang\s*\d+|\d+\s*\/\s*\d+)$/i.test(line)) continue;
-      if (line.length < 3) continue;
+      if (line.length < 2) continue;
 
       // Check pipe or tab format
       if (line.includes('|')) {
@@ -85,7 +85,7 @@ const PDFParser = {
         }
       }
 
-      // Check colon or hyphen: "Resilient: kiên cường" or "1. Abandon /əˈbændən/ - từ bỏ"
+      // Check colon or hyphen: "桜 (さくら): Hoa anh đào" or "Resilient: kiên cường" or "1. Abandon /əˈbændən/ - từ bỏ"
       const match = line.match(colonHyphenRegex);
       if (match) {
         let rawWord = match[2].trim();
@@ -100,7 +100,7 @@ const PDFParser = {
           rawWord = rawWord.replace(/\((n|v|adj|adv|prep|conj|pron|phr)\.?\)/i, '').trim();
         }
 
-        if (rawWord && meaning) {
+        if (rawWord && meaning && meaning.length > 0) {
           cards.push({
             word: rawWord,
             phonetic: phonetic,
@@ -113,16 +113,16 @@ const PDFParser = {
         }
       }
 
-      // Check adjacent lines: Line 1 = English word, Line 2 = Vietnamese meaning
+      // Check adjacent lines: Line 1 = Japanese/English word, Line 2 = Vietnamese meaning
       if (i + 1 < lines.length) {
         const wordCandidate = line;
         const nextLine = lines[i + 1];
 
-        // If line is 1-3 English words and next line is Vietnamese/explanation
-        const isEnglishish = /^[a-zA-Z\s\-'\,\(\)\/]+$/.test(wordCandidate);
+        // If line is 1-4 words in Japanese/Latin and next line is Vietnamese/explanation
+        const isWordCandidate = /^[a-zA-Z\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\s\-'\,\(\)\/]+$/.test(wordCandidate);
         const hasVietnameseOrMeaning = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(nextLine) || nextLine.length > wordCandidate.length;
 
-        if (isEnglishish && wordCandidate.length <= 40 && hasVietnameseOrMeaning && !nextLine.includes(':')) {
+        if (isWordCandidate && wordCandidate.length <= 40 && hasVietnameseOrMeaning && !nextLine.includes(':')) {
           cards.push({
             word: wordCandidate,
             phonetic: '',

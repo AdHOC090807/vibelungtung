@@ -230,8 +230,8 @@ class FlashLearnApp {
     this.parsedPdfCards = [];
     this._currentAudio = null;
     this._audioCache = new Map();
-    this._serverBaseUrl = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
-    this._elevenLabsOnline = false;
+    this._serverBaseUrl = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:8000';
+    this._isServerOnline = false;
     this.isAutoPlay = localStorage.getItem('flashlearn_autoplay') === 'true';
 
     this.initElements();
@@ -239,7 +239,7 @@ class FlashLearnApp {
     this.initEvents();
     this.initTheme();
     this.updateAutoPlayUI();
-    this.checkElevenLabsServer();
+    this.checkServerStatus();
     this.render();
   }
 
@@ -644,6 +644,14 @@ class FlashLearnApp {
     card.mastered = isMastered;
     this.saveData();
 
+    if (this._isServerOnline) {
+      fetch(`${this._serverBaseUrl}/api/cards/${encodeURIComponent(card.id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mastered: isMastered })
+      }).catch(err => console.warn('[FlashLearn] Lỗi lưu trạng thái thẻ lên SQLite:', err));
+    }
+
     if (isMastered) {
       this.showToast(`✅ Đã nhớ: "${card.word}"`);
     } else {
@@ -659,6 +667,15 @@ class FlashLearnApp {
 
     card.starred = !card.starred;
     this.saveData();
+
+    if (this._isServerOnline) {
+      fetch(`${this._serverBaseUrl}/api/cards/${encodeURIComponent(card.id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ starred: card.starred })
+      }).catch(err => console.warn('[FlashLearn] Lỗi lưu sao lên SQLite:', err));
+    }
+
     this.render();
     this.showToast(card.starred ? '⭐ Đã thêm vào mục Yêu thích' : 'Đã bỏ yêu thích');
   }
@@ -704,44 +721,84 @@ class FlashLearnApp {
     }
   }
 
-  // ==================== ELEVENLABS AI VOICE & AUDIO SYSTEM ====================
-  async checkElevenLabsServer() {
+  // ==================== FASTAPI FULL-STACK & AUDIO SYSTEM ====================
+  async checkServerStatus() {
     try {
       const res = await fetch(`${this._serverBaseUrl}/api/status`, { mode: 'cors' });
       if (res.ok) {
         const data = await res.json();
-        this._elevenLabsOnline = true;
-        if (this.elevenLabsStatusBadge) {
-          this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 cursor-pointer shadow-sm hover:bg-emerald-100 transition';
-          this.elevenLabsStatusBadge.innerHTML = `
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-600"></i>
-            <span>ElevenLabs AI (Flash 2.5)</span>
-          `;
-          this.elevenLabsStatusBadge.title = `Server ElevenLabs đang hoạt động!\nModel: ${data.model_id}\nGiọng đọc: ${data.voice_name}\nĐã lưu cache: ${data.cache_count} từ (${data.cache_size_mb} MB)\nBấm vào để xem thông tin.`;
-          lucide.createIcons();
-        }
-        console.log('[FlashLearn] ElevenLabs Server is online:', data);
+        this._isServerOnline = true;
+        this.updateServerBadge(true, data);
+        console.log('[FlashLearn] Full-stack Server is online:', data);
+        // Đồng bộ dữ liệu CSDL SQLite
+        await this.syncWithServer();
+      } else {
+        this._isServerOnline = false;
+        this.updateServerBadge(false);
       }
     } catch (e) {
-      this._elevenLabsOnline = false;
-      if (this.elevenLabsStatusBadge) {
-        this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 cursor-pointer hover:bg-amber-100 transition';
-        this.elevenLabsStatusBadge.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-          <span>Bật Server AI</span>
-        `;
-        this.elevenLabsStatusBadge.title = 'Chưa bật server local. Nhấp đúp vào file start-server.bat để kích hoạt giọng đọc AI ElevenLabs!';
-        lucide.createIcons();
-      }
+      this._isServerOnline = false;
+      this.updateServerBadge(false);
     }
   }
 
-  showElevenLabsInfo() {
-    if (this._elevenLabsOnline) {
-      this.showToast('🎙️ Giọng AI ElevenLabs (Flash 2.5) đang hoạt động! File âm thanh được tự động lưu Cache để không tốn điểm API.');
+  updateServerBadge(isOnline, data = null) {
+    if (!this.elevenLabsStatusBadge) return;
+    if (isOnline && data) {
+      this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 cursor-pointer shadow-sm hover:bg-emerald-100 transition';
+      this.elevenLabsStatusBadge.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-600"></i>
+        <span>Edge-TTS (Nanami 🇯🇵) + SQLite</span>
+      `;
+      this.elevenLabsStatusBadge.title = `Server Full-stack & SQLite đang hoạt động!\nCSDL: SQLite (flashcards.db - ${data.cards_count} thẻ)\nGiọng đọc: Edge-TTS (${data.tts_default_voice_ja}) + ElevenLabs\nCache: ${data.cache_count} từ (${data.cache_size_mb} MB)\nBấm vào để xem thông tin chi tiết.`;
     } else {
-      this.showToast('💡 Hãy nhấp đúp file start-server.bat (hoặc chạy "py server.py") để kích hoạt giọng đọc AI ElevenLabs!');
+      this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200 transition';
+      this.elevenLabsStatusBadge.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        <span>Bật Server Full-stack</span>
+      `;
+      this.elevenLabsStatusBadge.title = 'Nhấp đúp vào file start-server.bat để khởi chạy server Full-stack (FastAPI + SQLite + Edge-TTS)!';
+    }
+    lucide.createIcons();
+  }
+
+  async syncWithServer() {
+    try {
+      const resDecks = await fetch(`${this._serverBaseUrl}/api/decks`, { mode: 'cors' });
+      if (!resDecks.ok) return;
+      const decks = await resDecks.json();
+      if (!decks || decks.length === 0) return;
+
+      // Lấy thẻ cho từng bộ từ vựng
+      for (const d of decks) {
+        const resCards = await fetch(`${this._serverBaseUrl}/api/cards?deck_id=${encodeURIComponent(d.id)}`, { mode: 'cors' });
+        if (resCards.ok) {
+          d.cards = await resCards.json();
+        } else {
+          d.cards = [];
+        }
+      }
+
+      this.decks = decks;
+      this.saveData(); // Lưu dự phòng vào LocalStorage
+      
+      if (!this.decks.some(d => d.id === this.currentDeckId)) {
+        this.currentDeckId = this.decks[0].id;
+      }
+      this.populateDeckSelectors();
+      this.render();
+      console.log('[FlashLearn] Đã đồng bộ thành công CSDL SQLite:', this.decks.length, 'bộ thẻ');
+    } catch (e) {
+      console.warn('[FlashLearn] Lỗi khi đồng bộ CSDL từ server:', e);
+    }
+  }
+
+  showServerInfo() {
+    if (this._isServerOnline) {
+      this.showToast('🚀 Server Full-stack (FastAPI) & CSDL SQLite (flashcards.db) đang kết nối! Giọng đọc Edge-TTS tự nhiên & có lưu cache.');
+    } else {
+      this.showToast('💡 Hãy nhấp đúp file start-server.bat (hoặc chạy "py server.py") để kích hoạt server FastAPI + SQLite + Edge-TTS!');
     }
   }
 
@@ -783,10 +840,9 @@ class FlashLearnApp {
   }
 
   // ==================== MULTI-TIER AUDIO PLAYER ====================
-  // Tier 1: ElevenLabs AI Voice (model: eleven_flash_v2_5 + persistent disk cache khi bật server local)
-  // Tier 2: Youdao Dictionary Native Audio Stream (hỗ trợ Tiếng Trung zh, Tiếng Nhật jap, Tiếng Anh type=2, không bị chặn)
-  // Tier 3: Google Translate Audio Stream (no-referrer mode)
-  // Tier 4: Web Speech Synthesis (offline fallback)
+  // Tier 1: FastAPI /api/tts (Edge-TTS Nanami Neural + Persistent audio_cache + ElevenLabs fallback)
+  // Tier 2: Youdao Dictionary Native Audio Stream (hỗ trợ Tiếng Trung zh, Tiếng Nhật jap, Tiếng Anh type=2)
+  // Tier 3: Web Speech Synthesis (offline fallback)
   async playAudio(rawText, explicitLang = null) {
     if (!rawText) return;
 
@@ -808,8 +864,8 @@ class FlashLearnApp {
     const isKorean = targetLang.startsWith('ko');
     const isEnglish = targetLang.startsWith('en') || (!isJapanese && !isChinese && !isKorean);
 
-    const langCode = isJapanese ? 'ja' : (isChinese ? 'zh-CN' : (isKorean ? 'ko' : 'en'));
-    const langLabel = isJapanese ? 'Tiếng Nhật 🇯🇵' : (isChinese ? 'Tiếng Trung 🇨🇳' : (isKorean ? 'Tiếng Hàn 🇰🇷' : 'Tiếng Anh 🇬🇧'));
+    const langCode = isJapanese ? 'ja-JP' : (isChinese ? 'zh-CN' : (isKorean ? 'ko-KR' : 'en-US'));
+    const langLabel = isJapanese ? 'Tiếng Nhật 🇯🇵 (Nanami AI)' : (isChinese ? 'Tiếng Trung 🇨🇳' : (isKorean ? 'Tiếng Hàn 🇰🇷' : 'Tiếng Anh 🇬🇧'));
 
     // Dừng âm thanh đang phát trước đó
     if (this._currentAudio) {
@@ -820,69 +876,76 @@ class FlashLearnApp {
       this.stopAudioAnimation();
     }
 
-    // ========================================================
-    // ƯU TIÊN 1: ELEVENLABS AI VOICE CHO TIẾNG ANH (KÈM CACHE NẾU SERVER ĐANG CHẠY)
-    // ========================================================
-    if (isEnglish) {
-      const cacheKey = textToSpeak.toLowerCase().trim();
+    const cacheKey = `${textToSpeak.toLowerCase().trim()}:${langCode}`;
 
-      // 1. Kiểm tra cache trong bộ nhớ RAM trình duyệt
-      if (this._audioCache && this._audioCache.has(cacheKey)) {
-        this.showToast('🔊 ElevenLabs AI (Flash 2.5) ⚡ [Đã lưu cache]');
-        const cachedUrl = this._audioCache.get(cacheKey);
-        this.playAudioUrl(cachedUrl, () => {});
-        return;
-      }
-
-      // 2. Gọi Server local (/api/tts)
-      if (this._elevenLabsOnline) {
-        const ttsUrl = `${this._serverBaseUrl}/api/tts?text=${encodeURIComponent(textToSpeak)}`;
-        try {
-          const response = await fetch(ttsUrl, { mode: 'cors' });
-          if (response.ok) {
-            const isCacheHit = response.headers.get('X-Cache') === 'HIT';
-            this.showToast(isCacheHit ? '🔊 ElevenLabs AI (Flash 2.5) ⚡ [Đã lưu cache]' : '✨ ElevenLabs AI (Flash 2.5) 🎙️ [Mới tải & Đã lưu cache]');
-            const audioBlob = await response.blob();
-            const objectUrl = URL.createObjectURL(audioBlob);
-            this._audioCache.set(cacheKey, objectUrl);
-            this.playAudioUrl(objectUrl, () => {});
-            return;
-          }
-        } catch (err) {
-          console.warn('ElevenLabs server error, using dictionary audio stream:', err);
-        }
-      }
+    // 1. Kiểm tra cache trong bộ nhớ RAM trình duyệt
+    if (this._audioCache && this._audioCache.has(cacheKey)) {
+      this.showToast(`🔊 ${langLabel} ⚡ [Audio Cache]`);
+      const cachedUrl = this._audioCache.get(cacheKey);
+      this.playAudioUrl(cachedUrl, () => {
+        this.fallbackWebSpeech(textToSpeak, langCode);
+      });
+      return;
     }
 
-    // ========================================================
-    // DÒNG ÂM THANH NATIVE YOUDAO DICTIONARY (TIẾNG TRUNG, TIẾNG NHẬT, TIẾNG ANH)
-    // ========================================================
     this.showToast(`🔊 Đang phát âm (${langLabel})...`);
 
-    let primaryUrl = '';
-    if (isJapanese) {
-      primaryUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&le=jap`;
-    } else if (isChinese) {
-      primaryUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&le=zh`;
-    } else if (isEnglish) {
-      primaryUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&type=2`;
-    } else {
-      primaryUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(textToSpeak)}`;
+    // 2. GỌI API /api/tts CỦA SERVER.PY (EDGE-TTS + AUDIO_CACHE + ELEVENLABS)
+    const ttsUrl = `${this._serverBaseUrl}/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${encodeURIComponent(langCode)}`;
+
+    let serverSucceeded = false;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      const response = await fetch(ttsUrl, { signal: controller.signal, mode: 'cors' });
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const isCacheHit = response.headers.get('X-Cache') === 'HIT';
+        this.showToast(isCacheHit ? `🔊 ${langLabel} ⚡ [Audio Cache]` : `✨ ${langLabel} 🎙️ [Edge-TTS Nanami]`);
+        const audioBlob = await response.blob();
+        const objectUrl = URL.createObjectURL(audioBlob);
+        this._audioCache.set(cacheKey, objectUrl);
+        this.playAudioUrl(objectUrl, () => {
+          this.fallbackWebSpeech(textToSpeak, langCode);
+        });
+        serverSucceeded = true;
+        return;
+      }
+    } catch (err) {
+      console.warn('[FlashLearn] Server /api/tts chưa bật hoặc lỗi, chuyển ngay sang luồng dự phòng:', err);
     }
 
-    this.playAudioUrl(primaryUrl, () => {
-      console.warn('Primary audio stream failed, trying Google TTS...');
-      const backupUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(textToSpeak)}`;
-      this.playAudioUrl(backupUrl, () => {
-        console.warn('Backup audio failed, falling back to Web Speech Synthesis...');
-        this.fallbackWebSpeech(textToSpeak, targetLang);
-      });
-    });
+    // 3. NẾU SERVER CHƯA BẬT HOẶC LỖI -> DÙNG NGAY WEB SPEECH SYNTHESIS / YOUDAO NATIVE
+    if (!serverSucceeded) {
+      let onlineFallbackUrl = '';
+      if (isJapanese) {
+        onlineFallbackUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&le=jap`;
+      } else if (isChinese) {
+        onlineFallbackUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&le=zh`;
+      } else if (isEnglish) {
+        onlineFallbackUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&type=2`;
+      }
+
+      if (onlineFallbackUrl) {
+        this.playAudioUrl(onlineFallbackUrl, () => {
+          console.warn('[FlashLearn] Luồng trực tuyến gặp lỗi, phát âm ngay qua Web Speech Synthesis');
+          this.fallbackWebSpeech(textToSpeak, langCode);
+        });
+      } else {
+        this.fallbackWebSpeech(textToSpeak, langCode);
+      }
+    }
   }
 
   fallbackWebSpeech(text, lang) {
-    if (!('speechSynthesis' in window)) return;
+    if (!('speechSynthesis' in window)) {
+      this.showToast('⚠️ Trình duyệt của bạn không hỗ trợ Web Speech Synthesis');
+      return;
+    }
     try {
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = lang;
       utterance.rate = lang.startsWith('ja') ? 0.95 : 0.9;
@@ -896,9 +959,15 @@ class FlashLearnApp {
         utterance.voice = voice;
       }
 
+      this.startAudioAnimation();
+      utterance.onend = () => this.stopAudioAnimation();
+      utterance.onerror = () => this.stopAudioAnimation();
+
       window.speechSynthesis.speak(utterance);
+      this.showToast(`🗣️ Đang phát âm (Web Speech: ${lang})...`);
     } catch (e) {
-      console.error('TTS error:', e);
+      console.error('Speech synthesis error:', e);
+      this.stopAudioAnimation();
     }
   }
 
@@ -928,6 +997,13 @@ class FlashLearnApp {
       this.resetFlipWithoutAnimation();
       this.currentCardIndex = 0;
       this.saveData();
+
+      if (this._isServerOnline) {
+        fetch(`${this._serverBaseUrl}/api/decks/${encodeURIComponent(deck.id)}/reset`, {
+          method: 'POST'
+        }).catch(err => console.warn('[FlashLearn] Lỗi đặt lại tiến trình trên SQLite:', err));
+      }
+
       this.render();
       this.showToast('🔄 Đã đặt lại toàn bộ tiến trình học!');
     }
@@ -1285,6 +1361,18 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       };
       this.decks.push(targetDeck);
       targetDeckId = targetDeck.id;
+
+      if (this._isServerOnline) {
+        fetch(`${this._serverBaseUrl}/api/decks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: targetDeck.id,
+            name: targetDeck.name,
+            lang: targetDeck.lang
+          })
+        }).catch(err => console.warn('[FlashLearn] Lỗi lưu deck lên server:', err));
+      }
     }
 
     let newCards = [];
@@ -1311,6 +1399,20 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     this.populateDeckSelectors();
     this.closeImportModal();
     this.render();
+
+    // Lưu thẳng vào cơ sở dữ liệu SQLite qua API
+    if (this._isServerOnline) {
+      fetch(`${this._serverBaseUrl}/api/cards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deck_id: targetDeck.id,
+          cards: newCards
+        })
+      }).then(res => res.json())
+        .then(data => console.log('[FlashLearn] Đã lưu thẻ vào SQLite:', data))
+        .catch(err => console.warn('[FlashLearn] Lỗi lưu thẻ lên SQLite:', err));
+    }
 
     // Reset inputs
     this.aiCodeInput.value = '';
@@ -1378,6 +1480,18 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       cards: []
     };
 
+    if (this._isServerOnline) {
+      fetch(`${this._serverBaseUrl}/api/decks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: newDeck.id,
+          name: newDeck.name,
+          lang: newDeck.lang
+        })
+      }).catch(err => console.warn('[FlashLearn] Lỗi lưu deck lên SQLite:', err));
+    }
+
     this.decks.push(newDeck);
     this.currentDeckId = newDeck.id;
     this.resetFlipWithoutAnimation();
@@ -1407,9 +1521,15 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     if (!deck) return;
 
     if (confirm(`Bạn có chắc muốn xóa bộ từ vựng "${deck.name}" và toàn bộ ${deck.cards.length} thẻ không?`)) {
+      if (this._isServerOnline) {
+        fetch(`${this._serverBaseUrl}/api/decks/${encodeURIComponent(deckId)}`, {
+          method: 'DELETE'
+        }).catch(err => console.warn('[FlashLearn] Lỗi xóa deck trên SQLite:', err));
+      }
+
       this.decks = this.decks.filter(d => d.id !== deckId);
       if (this.currentDeckId === deckId) {
-        this.currentDeckId = this.decks[0].id;
+        this.currentDeckId = this.decks.length > 0 ? this.decks[0].id : null;
         this.resetFlipWithoutAnimation();
         this.currentCardIndex = 0;
       }
@@ -1521,7 +1641,7 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     if (this.elevenLabsStatusBadge) {
       this.elevenLabsStatusBadge.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.showElevenLabsInfo();
+        this.showServerInfo();
       });
     }
 

@@ -1,72 +1,84 @@
-# FlashLearn - Ứng Dụng Web Học Từ Vựng Flashcard Lật 2 Mặt
+# FlashLearn - Ứng Dụng Web Học Từ Vựng Flashcard Tiếng Nhật Full-Stack
 
-Ứng dụng web học từ vựng bằng flashcard lật 2 mặt tương tự Quizlet / Anki, thiết kế hiện đại, mượt mà và trực quan.
+Ứng dụng web học từ vựng Flashcard 2 mặt hoàn chỉnh theo phong cách hiện đại (tương tự Anki / Quizlet), tích hợp CSDL SQLite vĩnh viễn và giọng đọc AI bản xứ (Edge-TTS Nanami 🇯🇵, Jenny 🇬🇧, ElevenLabs).
 
-## 🚀 Cách mở và sử dụng với giọng đọc AI ElevenLabs
+---
 
-### Cách 1: Khởi động với giọng AI ElevenLabs (Khuyên dùng)
-Chỉ cần **nhấp đúp chuột vào file `start-server.bat`**. 
-Cửa sổ server sẽ tự động chạy và mở trình duyệt tại địa chỉ `http://localhost:3000`.
+## 🚀 Khởi động ứng dụng (1-Click)
 
-Hoặc mở bằng terminal:
+### Cách 1: Khởi động Full-Stack Server (Khuyên dùng)
+Chỉ cần **nhấp đúp chuột vào file `start-server.bat`**:
+- Hệ thống sẽ tự động kiểm tra môi trường Python.
+- Tự động cài đặt các thư viện cần thiết từ `requirements.txt` (`fastapi`, `uvicorn`, `edge-tts`).
+- Khởi động FastAPI server tại địa chỉ: **`http://localhost:8000`** và tự động mở trình duyệt.
+- Cả giao diện Web lẫn API đều chạy chung trên cổng `8000` (tuyệt đối không bị lỗi CORS hay lệch cổng).
+
+Hoặc chạy thủ công qua Terminal:
 ```powershell
+pip install -r requirements.txt
 py server.py
 # Hoặc: python server.py
 ```
 
-### Cách 2: Mở trực tiếp không cần server (Dùng giọng đọc dự phòng)
-Nhấp đúp chuột để mở trực tiếp file `index.html` trong bất kỳ trình duyệt nào. Khi chưa bật server, ứng dụng sẽ tự động chuyển sang giọng phát âm dự phòng.
+### Cách 2: Sử dụng trực tiếp trên GitHub Pages / Mở file index.html
+- Link trực tuyến: [https://adhoc090807.github.io/vibelungtung/](https://adhoc090807.github.io/vibelungtung/)
+- Khi không bật server local, ứng dụng tự động kích hoạt chế độ **Offline / Trực tuyến** với `window.speechSynthesis` và bộ nhớ `localStorage`, đảm bảo bấm loa lúc nào cũng có âm thanh!
 
 ---
 
-## 🎙️ Tính năng Giọng đọc AI ElevenLabs (Flash 2.5 + Cache tiết kiệm điểm)
+## 🏗️ Kiến trúc Full-Stack & CSDL SQLite (`flashcards.db`)
 
-1. **Bảo mật API Key**:
-   - API Key được cất an toàn trong file `.env` ở máy chủ cục bộ (không bao giờ lộ ra mã nguồn giao diện).
-   - Đã được tự động thêm vào `.gitignore` để tránh bị đẩy lên GitHub.
+1. **Thống nhất Backend duy nhất (`server.py`)**:
+   - Sử dụng **FastAPI** và **Uvicorn** hiệu năng cao.
+   - Vừa phục vụ file tĩnh (`index.html`, `app.js`, `style.css`, `pdf-parser.js`), vừa xử lý các API RESTful trên cùng một cổng `8000`.
 
-2. **Model siêu tiết kiệm `eleven_flash_v2_5`**:
-   - Sử dụng model tối ưu của ElevenLabs giúp giảm 50% số điểm miễn phí tiêu tốn so với model thông thường.
-   - Giọng đọc mặc định: **Alice** (`Xb7hH8MSUJpSbSDYk0k2`) - Giọng chuẩn sư phạm, phát âm tiếng Anh cực kỳ trong trẻo, rõ ràng.
+2. **Cơ sở dữ liệu SQLite vĩnh viễn (`flashcards.db`)**:
+   - Tự động nạp sẵn bộ thẻ mẫu **🇯🇵 Tiếng Nhật JLPT N5 - Nhập Môn & Thông Dụng** (với Kanji, Furigana cách đọc, nghĩa tiếng Việt, câu ví dụ và bản dịch).
+   - Tự động đồng bộ 2 chiều: Khi có server, dữ liệu được ghi thẳng vào SQLite qua API; khi offline, dữ liệu được lưu dự phòng vào `localStorage`.
 
-3. **Cơ chế lưu đệm Cache thông minh (Tiết kiệm 100% điểm khi nghe lại)**:
-   - Toàn bộ các từ vựng sau khi được tải về lần đầu tiên sẽ được lưu vĩnh viễn dạng file `.mp3` trong thư mục `audio_cache/`.
-   - Khi bạn bấm nghe lại một từ đã học, server sẽ phát lại ngay lập tức từ ổ cứng mà **KHÔNG gọi đến ElevenLabs API**, đảm bảo không tốn thêm bất kỳ điểm miễn phí nào.
-
-4. **Nút phát âm chống lật thẻ (`stopPropagation`)**:
-   - Nút hình chiếc loa 🔊 được thiết kế nổi bật ngay cạnh từ vựng và ở thanh tiêu đề thẻ.
-   - Tích hợp hàm `stopPropagation()` chặn sự kiện lật thẻ, giúp bạn thoải mái nghe lại phát âm nhiều lần mà thẻ không bị lật lung tung.
-   - Hiệu ứng sóng âm phát sáng (Pulse Wave Animation) khi đang phát âm.
+3. **Danh sách API chính**:
+   - `GET /api/status`: Kiểm tra trạng thái máy chủ, CSDL SQLite và số file cache.
+   - `GET /api/decks`: Lấy danh sách bộ thẻ kèm thống kê số thẻ đã thuộc/cần ôn.
+   - `POST /api/decks`: Tạo bộ thẻ mới.
+   - `DELETE /api/decks/{deck_id}`: Xóa bộ thẻ và các thẻ từ vựng liên quan.
+   - `POST /api/decks/{deck_id}/reset`: Đặt lại tiến trình học về 0.
+   - `GET /api/cards?deck_id=...`: Lấy danh sách thẻ từ vựng theo bộ.
+   - `POST /api/cards`: Thêm thẻ từ vựng (hỗ trợ nhập 1 thẻ hoặc hàng loạt từ AI/PDF).
+   - `PUT /api/cards/{card_id}`: Cập nhật trạng thái đã thuộc, đánh dấu sao ⭐.
+   - `DELETE /api/cards/{card_id}`: Xóa thẻ từ vựng.
+   - `GET /api/tts?text=...&lang=...`: Phát âm Text-to-Speech với bộ nhớ đệm cache.
 
 ---
 
-## ✨ Tính năng nổi bật khác
+## 🎙️ Hệ thống Giọng đọc AI & Bộ nhớ đệm Audio Cache
 
-1. **Thẻ Flashcard lật 3D 2 mặt**:
-   - **Mặt trước**: Từ vựng, phiên âm chuẩn IPA, từ loại, nút nghe phát âm tiếng Anh chuẩn bản xứ (sử dụng Web Speech Synthesis của trình duyệt), nút đánh dấu yêu thích ⭐.
-   - **Mặt sau**: Định nghĩa tiếng Việt chi tiết, câu ví dụ thực tế kèm bản dịch nghĩa tiếng Việt.
-   - Hiệu ứng lật thẻ 3D mượt mà bằng cách nhấn vào thẻ hoặc bấm phím cách (`Space`).
+1. **Ưu tiên 1 - Edge-TTS (Chất lượng phòng thu, Miễn phí 100%)**:
+   - Tiếng Nhật: Giọng nữ bản xứ tự nhiên **`ja-JP-NanamiNeural`** phát âm cực chuẩn và truyền cảm.
+   - Tiếng Anh: Giọng nữ chuẩn quốc tế **`en-US-JennyNeural`**.
+   - Tiếng Trung: **`zh-CN-XiaoxiaoNeural`**.
+   - Không cần API key, không giới hạn số lượng ký tự.
 
-2. **Cách nhập từ vựng cực kỳ linh hoạt**:
-   - **Cách 1: Nhập bằng mã AI (JSON hoặc văn bản thông thường)**:
-     - Hỗ trợ định dạng JSON đầy đủ.
-     - Hỗ trợ định dạng văn bản ngắn gọn: `từ | phiên âm | nghĩa | ví dụ | dịch câu` hoặc `từ - nghĩa`.
-     - Tích hợp sẵn nút **"Mẫu lệnh cho AI 🤖"** và nút **"Sao chép prompt"** 1-click để bạn dán vào ChatGPT / Gemini / Claude là có ngay mã code để dán vào app.
-   - **Cách 2: Đọc trực tiếp từ file PDF**:
-     - Kéo thả hoặc chọn file tài liệu PDF từ vựng tiếng Anh.
-     - Ứng dụng tự động bóc tách từ vựng, phiên âm và nghĩa (nhờ thư viện `PDF.js` xử lý ngay trên trình duyệt).
-     - Cho phép xem trước danh sách từ vựng trích xuất trước khi lưu vào bộ thẻ.
+2. **Ưu tiên 2 - ElevenLabs AI Voice (Dự phòng)**:
+   - Nếu có cấu hình `ELEVENLABS_API_KEY` trong file `.env`, hệ thống có thể kết hợp thêm giọng ElevenLabs.
 
-3. **Quản lý nhiều bộ thẻ (Decks)**:
-   - Tạo nhiều chủ đề từ vựng (ví dụ: IELTS, TOEIC, Giao tiếp hằng ngày, Từ vựng chuyên ngành...).
-   - Sao lưu toàn bộ dữ liệu ra file `.json` hoặc khôi phục dữ liệu bất cứ lúc nào.
-   - Tự động lưu tiến trình học vào trình duyệt (LocalStorage), không bị mất dữ liệu khi F5.
+3. **Cơ chế lưu đệm Cache thông minh (`audio_cache/`)**:
+   - Mọi từ vựng hoặc câu ví dụ sau khi phát âm lần đầu sẽ được lưu thành file `.mp3` trong thư mục `audio_cache/`.
+   - Lần nghe sau sẽ phản hồi tức thì với `X-Cache: HIT` trong 0.01 giây mà không tốn công sinh lại.
 
-4. **Bộ lọc & Thống kê thông minh**:
-   - Theo dõi số lượng: **Đã thuộc** và **Cần ôn**.
-   - Bộ lọc: "Tất cả", "Cần ôn", "Yêu thích ⭐".
-   - Nút xáo trộn thẻ (Shuffle) để thay đổi thứ tự ôn tập.
-   - Hiệu ứng pháo hoa ăn mừng khi hoàn thành một bộ thẻ 🎉.
+4. **Bấm loa chống lật thẻ & Dự phòng không gián đoạn**:
+   - Các nút loa 🔊 đều được tích hợp `e.stopPropagation()` và `e.preventDefault()`, không bao giờ bị lật thẻ ngoài ý muốn khi nhấn nghe.
+   - Nếu server offline hoặc gặp sự cố mạng, hệ thống **ngay lập tức** chuyển sang `window.speechSynthesis` của trình duyệt hoặc audio stream trực tiếp, đảm bảo **bấm loa lúc nào cũng có tiếng**!
+
+---
+
+## 📄 Hỗ trợ Trích xuất Từ vựng từ PDF (`pdf-parser.js`)
+
+- Đọc trực tiếp các file PDF từ vựng tiếng Nhật, tiếng Anh.
+- Tự động nhận diện định dạng:
+  - `桜 (さくら) : Hoa anh đào`
+  - `1. 食べる - Ăn`
+  - `Từ vựng | Phiên âm | Nghĩa | Ví dụ`
+- Khi nhấn **"Thêm vào bộ thẻ"**, toàn bộ từ trích xuất từ PDF sẽ được gửi qua `POST /api/cards` và lưu vĩnh viễn vào SQLite database!
 
 ---
 
@@ -74,33 +86,11 @@ Nhấp đúp chuột để mở trực tiếp file `index.html` trong bất kỳ
 
 | Phím tắt | Chức năng |
 |----------|-----------|
-| `Space` hoặc `Lật thẻ` | Lật mặt trước / mặt sau của thẻ |
+| `Space` hoặc click thẻ | Lật mặt trước / mặt sau của thẻ |
 | `→` (Mũi tên phải) | Chuyển sang thẻ tiếp theo |
 | `←` (Mũi tên trái) | Quay lại thẻ trước |
 | `1` | Đánh dấu: **Chưa nhớ** (Cần ôn lại) |
 | `2` | Đánh dấu: **Đã nhớ** (Thành thạo) |
 | `S` | Đánh dấu sao yêu thích ⭐ |
-| `P` hoặc `V` | Nghe phát âm tiếng Anh (Pronunciation) |
-
----
-
-## 🤖 Hướng dẫn lấy mã từ vựng bằng AI (ChatGPT, Claude, Gemini)
-
-Sao chép câu lệnh mẫu dưới đây và gửi cho AI:
-
-```text
-Hãy tạo cho tôi danh sách 20 từ vựng tiếng Anh chủ đề [ĐIỀN CHỦ ĐỀ VÀO ĐÂY] dưới định dạng JSON sau:
-[
-  {
-    "word": "từ tiếng anh",
-    "phonetic": "/phiên âm IPA/",
-    "pos": "noun / verb / adjective...",
-    "meaning": "nghĩa tiếng Việt ngắn gọn, dễ hiểu",
-    "example": "Câu ví dụ tiếng Anh tự nhiên",
-    "exampleMeaning": "Dịch nghĩa câu ví dụ sang tiếng Việt"
-  }
-]
-Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.
-```
-
-Sau khi AI tạo xong, bấm copy đoạn mã rồi mở web, bấm nút **"Thêm từ vựng"**, dán vào ô văn bản và nhấn **"Thêm vào bộ thẻ"** là xong!
+| `P` hoặc `V` | Bấm nghe phát âm AI |
+| `A` | Bật / Tắt chế độ tự động đọc khi chuyển thẻ |
