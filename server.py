@@ -704,7 +704,46 @@ async def serve_index():
 # Mount toàn bộ thư mục BASE_DIR để phục vụ app.js, style.css, pdf-parser.js...
 app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 
-# ==================== RUN SERVER ====================
+# ==================== RUN SERVER & AUTO-OPEN CHROME ====================
+def open_chrome_browser():
+    """Tự động mở giao diện trên Google Chrome (ưu tiên) hoặc trình duyệt mặc định."""
+    import time
+    import subprocess
+    import webbrowser
+
+    time.sleep(1.2)  # Đợi server FastAPI khởi động và sẵn sàng nhận kết nối
+    target_url = f"http://localhost:{PORT}"
+
+    chrome_candidates = [
+        os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
+    ]
+
+    for chrome_path in chrome_candidates:
+        if os.path.isfile(chrome_path):
+            try:
+                subprocess.Popen([chrome_path, target_url])
+                print(f"🌐 Đã tự động mở Web trên Google Chrome: {target_url}")
+                return
+            except Exception as e:
+                print(f"⚠️ Không thể khởi động Chrome ({chrome_path}): {e}")
+
+    # Fallback nếu đường dẫn tĩnh không khớp: thử gọi lệnh chrome hệ thống
+    try:
+        subprocess.Popen(["cmd", "/c", "start", "chrome", target_url])
+        print(f"🌐 Đã mở Web trên Google Chrome qua lệnh start: {target_url}")
+        return
+    except Exception:
+        pass
+
+    # Fallback cuối cùng: mở trình duyệt mặc định của Windows
+    try:
+        webbrowser.open(target_url)
+        print(f"🌐 Đã mở Web trên trình duyệt mặc định: {target_url}")
+    except Exception as e:
+        print(f"⚠️ Vui lòng mở trình duyệt và truy cập: {target_url}")
+
 def run():
     print("=" * 64)
     print("🚀  FLASHLEARN - JAPANESE FLASHCARD FULL-STACK SERVER (FastAPI)")
@@ -717,6 +756,10 @@ def run():
     print(f"🎙️ Giọng đọc tiếng Nhật:     {EDGE_VOICES['ja-JP']} (Nanami Neural)")
     print(f"🎙️ Giọng đọc tiếng Anh:      {EDGE_VOICES['en-US']} (Jenny Neural)")
     print("=" * 64)
+
+    import threading
+    threading.Thread(target=open_chrome_browser, daemon=True).start()
+
     uvicorn.run(app, host="0.0.0.0", port=PORT)
 
 if __name__ == '__main__':
