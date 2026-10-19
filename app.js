@@ -946,7 +946,15 @@ class FlashLearnApp {
   }
 
   playAudioUrl(url, onError = null) {
-    const audio = document.createElement('audio');
+    if (this._currentAudio) {
+      try {
+        this._currentAudio.pause();
+        this._currentAudio.currentTime = 0;
+      } catch (e) {}
+      this._currentAudio = null;
+    }
+
+    const audio = new Audio();
     audio.referrerPolicy = 'no-referrer';
     audio.src = url;
     this._currentAudio = audio;
@@ -957,6 +965,7 @@ class FlashLearnApp {
       this.stopAudioAnimation();
     };
     audio.onerror = (e) => {
+      console.warn('[FlashLearn] Audio play error:', e);
       this.stopAudioAnimation();
       if (typeof onError === 'function') onError(e);
     };
@@ -964,6 +973,7 @@ class FlashLearnApp {
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch(err => {
+        console.warn('[FlashLearn] Audio play promise rejected:', err);
         this.stopAudioAnimation();
         if (typeof onError === 'function') onError(err);
       });
@@ -972,7 +982,8 @@ class FlashLearnApp {
 
   // ==================== MULTI-TIER AUDIO PLAYER ====================
   // Tier 1: FastAPI POST /api/tts (ElevenLabs AI Multilingual + audio_cache MD5)
-  // Tier 2: Web Speech Synthesis Fallback (bảo đảm 100% mọi trường hợp đều phát ra tiếng)
+  // Tier 2: Online Stream Fallback (Youdao / Google TTS)
+  // Tier 3: Web Speech Synthesis (offline browser fallback)
   async playAudio(rawText, explicitLang = null) {
     if (!rawText) return;
 
@@ -998,7 +1009,7 @@ class FlashLearnApp {
       this.showToast(`🔊 ${langLabel} ⚡ [Audio Cache]`);
       const cachedUrl = this._audioCache.get(cacheKey);
       this.playAudioUrl(cachedUrl, () => {
-        this.fallbackWebSpeech(textToSpeak, targetLang);
+        this.fallbackOnlineOrSpeech(textToSpeak, targetLang);
       });
       return;
     }
@@ -1031,20 +1042,38 @@ class FlashLearnApp {
           const objectUrl = URL.createObjectURL(audioBlob);
           this._audioCache.set(cacheKey, objectUrl);
           this.playAudioUrl(objectUrl, () => {
-            this.fallbackWebSpeech(textToSpeak, targetLang);
+            this.fallbackOnlineOrSpeech(textToSpeak, targetLang);
           });
           serverSucceeded = true;
           return;
         }
       } catch (err) {
-        console.warn('[FlashLearn] Server /api/tts lỗi, chuyển ngay sang luồng dự phòng Web Speech:', err);
+        console.warn('[FlashLearn] Server /api/tts lỗi, chuyển sang luồng dự phòng:', err);
       }
     }
 
     // 3. FALLBACK BẮT BUỘC: NẾU GỌI /api/tts BỊ LỖI HOẶC CHƯA BẬT SERVER
-    // Dùng ngay window.speechSynthesis với đúng mã ngôn ngữ vừa nhận diện để phát âm
     if (!serverSucceeded) {
-      this.fallbackWebSpeech(textToSpeak, targetLang);
+      this.fallbackOnlineOrSpeech(textToSpeak, targetLang);
+    }
+  }
+
+  fallbackOnlineOrSpeech(text, lang) {
+    let onlineUrl = '';
+    if (lang === 'ja-JP') {
+      onlineUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&le=jap`;
+    } else if (lang === 'vi-VN') {
+      onlineUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=vi&q=${encodeURIComponent(text)}`;
+    } else if (lang === 'en-US') {
+      onlineUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=2`;
+    }
+
+    if (onlineUrl) {
+      this.playAudioUrl(onlineUrl, () => {
+        this.fallbackWebSpeech(text, lang);
+      });
+    } else {
+      this.fallbackWebSpeech(text, lang);
     }
   }
 
@@ -1885,8 +1914,17 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
   }
 }
 
-// Start application when DOM is ready
+// Khởi chạy ứng dụng an toàn (xử lý cả trường hợp DOM đã sẵn sàng trước khi script nạp xong)
 let app;
-document.addEventListener('DOMContentLoaded', () => {
-  app = new FlashLearnApp();
-});
+function initFlashLearnApp() {
+  if (!app) {
+    app = new FlashLearnApp();
+    window.app = app;
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initFlashLearnApp);
+} else {
+  initFlashLearnApp();
+}
