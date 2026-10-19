@@ -62,7 +62,7 @@ def load_env(env_path):
 ENV = load_env(ENV_FILE)
 PORT = int(os.environ.get('PORT') or ENV.get('PORT', 8000))
 ELEVENLABS_API_KEY = os.environ.get('ELEVENLABS_API_KEY') or ENV.get('ELEVENLABS_API_KEY', '')
-ELEVENLABS_VOICE_ID = os.environ.get('ELEVENLABS_VOICE_ID') or ENV.get('ELEVENLABS_VOICE_ID', 'Xb7hH8MSUJpSbSDYk0k2')
+ELEVENLABS_VOICE_ID = os.environ.get('ELEVENLABS_VOICE_ID') or ENV.get('ELEVENLABS_VOICE_ID', 'JBFqnCBsd6RMkjVDRZzb')
 ELEVENLABS_MODEL_ID = os.environ.get('ELEVENLABS_MODEL_ID') or ENV.get('ELEVENLABS_MODEL_ID', 'eleven_flash_v2_5')
 
 # ==================== DATABASE SQLITE (flashcards.db) ====================
@@ -187,6 +187,8 @@ def init_db():
 EDGE_VOICES = {
     'ja': 'ja-JP-NanamiNeural',    # Giọng nữ tiếng Nhật tự nhiên, trong trẻo
     'ja-JP': 'ja-JP-NanamiNeural',
+    'vi': 'vi-VN-HoaiMyNeural',    # Giọng nữ tiếng Việt tự nhiên
+    'vi-VN': 'vi-VN-HoaiMyNeural',
     'en': 'en-US-JennyNeural',     # Giọng nữ tiếng Anh chuẩn
     'en-US': 'en-US-JennyNeural',
     'zh': 'zh-CN-XiaoxiaoNeural',   # Giọng nữ tiếng Trung phổ thông
@@ -196,24 +198,17 @@ EDGE_VOICES = {
 }
 
 def detect_language(text: str, default_lang: str = 'ja-JP') -> str:
-    """Tự động phát hiện ngôn ngữ nếu không được chỉ định"""
+    """Tự động phát hiện ngôn ngữ văn bản: Tiếng Nhật (ja-JP), Tiếng Việt (vi-VN), Tiếng Anh (en-US)"""
     if not text:
         return default_lang
-    # Chứa Kana tiếng Nhật -> ja-JP
-    if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', text):
+    # 1. Chứa ký tự Hiragana, Katakana hoặc Kanji -> ja-JP
+    if re.search(r'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]', text):
         return 'ja-JP'
-    # Chứa ký tự Hangul tiếng Hàn -> ko-KR
-    if re.search(r'[\uAC00-\uD7AF\u1100-\u11FF]', text):
-        return 'ko-KR'
-    # Chứa chữ Hán (CJK) mà không có Kana:
-    if re.search(r'[\u4E00-\u9FFF]', text):
-        if default_lang.startswith('zh'):
-            return 'zh-CN'
-        return 'ja-JP' # Mặc định cho app học tiếng Nhật
-    # Chữ Latinh
-    if re.search(r'[a-zA-Z]', text):
-        return 'en-US'
-    return default_lang
+    # 2. Chứa dấu tiếng Việt -> vi-VN
+    if re.search(r'[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]', text, re.IGNORECASE):
+        return 'vi-VN'
+    # 3. Còn lại -> en-US
+    return 'en-US'
 
 def clean_text_for_speech(text: str, lang: str) -> str:
     """Làm sạch chuỗi trước khi chuyển thành giọng nói"""
@@ -225,43 +220,52 @@ def clean_text_for_speech(text: str, lang: str) -> str:
         if m:
             return m.group(1).strip()
     
-    # Bỏ chú thích ngoặc đơn/vuông/gạch chéo
+    # Bỏ chú thích ngoặc đơn/vuông/gạch chéo phiên âm
     cleaned = re.sub(r"\(.*?\)|\[.*?\]|\/.*?\/", " ", text)
     cleaned = re.sub(r"[\(\)\[\]\/]", " ", cleaned).strip()
     return cleaned or text
 
-def get_cache_filename(text: str, voice: str) -> str:
-    clean = re.sub(r'[^a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]+', '_', text.strip().lower())
-    slug = clean[:25].strip('_') or 'speech'
-    key = f"{text.strip().lower()}:{voice}".encode('utf-8')
-    h = hashlib.md5(key).hexdigest()[:12]
-    return f"{slug}_{h}.mp3"
+def get_cache_filenames(text: str) -> List[str]:
+    """Tạo tên file theo mã băm MD5 của text và kiểm tra trong audio_cache"""
+    text_key = text.strip().lower()
+    h = hashlib.md5(text_key.encode('utf-8')).hexdigest()
+    clean = re.sub(r'[^\w]+', '_', text.strip()[:20], flags=re.UNICODE).strip('_')
+    filenames = []
+    if clean:
+        filenames.append(f"{clean}_{h[:12]}.mp3")
+    filenames.append(f"{h}.mp3")
+    return filenames
 
 async def generate_edge_tts(text: str, voice: str, filepath: str):
-    """Sinh file mp3 bằng Microsoft Edge TTS (miễn phí, chất lượng phòng thu)"""
+    """Dự phòng: Sinh file mp3 bằng Microsoft Edge TTS"""
     comm = edge_tts.Communicate(text, voice)
     await comm.save(filepath)
 
-async def generate_elevenlabs_tts(text: str, filepath: str):
-    """Dự phòng ElevenLabs nếu có API key trong .env"""
+async def generate_elevenlabs_tts(text: str, filepath: str, voice_id: Optional[str] = None):
+    """Gọi REST API của ElevenLabs để sinh âm thanh AI đa ngôn ngữ (Nhật, Việt, Anh)"""
     if not ELEVENLABS_API_KEY:
-        raise ValueError("Chưa cấu hình ELEVENLABS_API_KEY")
+        raise ValueError("Chưa cấu hình ELEVENLABS_API_KEY trong file .env")
     import urllib.request
-    api_url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}?output_format=mp3_44100_128"
+    target_voice = voice_id or ELEVENLABS_VOICE_ID or 'JBFqnCBsd6RMkjVDRZzb'
+    target_model = ELEVENLABS_MODEL_ID or 'eleven_flash_v2_5'
+    api_url = f"https://api.elevenlabs.io/v1/text-to-speech/{target_voice}?output_format=mp3_44100_128"
     headers = {
         "xi-api-key": ELEVENLABS_API_KEY,
         "Content-Type": "application/json",
-        "User-Agent": "FlashLearn-Fullstack/1.0"
+        "User-Agent": "FlashLearn-ElevenLabs/2.0"
     }
     payload = {
         "text": text,
-        "model_id": ELEVENLABS_MODEL_ID,
-        "voice_settings": {"stability": 0.5, "similarity_boost": 0.8}
+        "model_id": target_model,
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75
+        }
     }
     req = urllib.request.Request(api_url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
     loop = asyncio.get_event_loop()
     def _fetch():
-        with urllib.request.urlopen(req, timeout=12) as resp:
+        with urllib.request.urlopen(req, timeout=15) as resp:
             return resp.read()
     data = await loop.run_in_executor(None, _fetch)
     with open(filepath, 'wb') as f:
@@ -619,63 +623,73 @@ async def process_tts(text: str, lang: Optional[str] = None, custom_voice: Optio
     if not text:
         raise HTTPException(status_code=400, detail="Vui lòng cung cấp tham số 'text' để phát âm.")
 
-    # Tự động nhận diện ngôn ngữ nếu không chỉ định rõ
+    # Tự động nhận diện ngôn ngữ nếu không chỉ định rõ: ja-JP (Nhật), vi-VN (Việt), en-US (Anh)
     detected_lang = lang if lang and lang != 'auto' else detect_language(text)
     clean_text = clean_text_for_speech(text, detected_lang)
     text_to_speak = clean_text or text
 
-    # Chọn Voice chuẩn cho Edge-TTS
-    voice = custom_voice or EDGE_VOICES.get(detected_lang) or EDGE_VOICES.get(detected_lang.split('-')[0]) or 'ja-JP-NanamiNeural'
-    
-    cache_filename = get_cache_filename(text_to_speak, voice)
-    cache_filepath = os.path.join(CACHE_DIR, cache_filename)
+    # 1. KIỂM TRA BỘ NHỚ ĐỆM (CACHE): Kiểm tra trong thư mục audio_cache dựa theo mã băm MD5
+    cache_filenames = get_cache_filenames(text_to_speak)
+    for cf in cache_filenames:
+        cpath = os.path.join(CACHE_DIR, cf)
+        if os.path.exists(cpath) and os.path.getsize(cpath) > 0:
+            print(f"[CACHE HIT ⚡] Trả về ngay từ audio_cache: {cf} (Không gọi lại ElevenLabs)")
+            return FileResponse(
+                cpath,
+                media_type="audio/mpeg",
+                headers={
+                    "X-Cache": "HIT",
+                    "X-Source": "audio_cache",
+                    "Cache-Control": "public, max-age=31536000, immutable"
+                }
+            )
 
-    # 1. KIỂM TRA BỘ NHỚ ĐỆM (CACHE)
-    if os.path.exists(cache_filepath) and os.path.getsize(cache_filepath) > 0:
-        return FileResponse(
-            cache_filepath,
-            media_type="audio/mpeg",
-            headers={
-                "X-Cache": "HIT",
-                "Cache-Control": "public, max-age=31536000, immutable"
-            }
-        )
+    primary_cache_file = os.path.join(CACHE_DIR, cache_filenames[0])
 
-    # 2. SINH ÂM THANH MỚI: ƯU TIÊN EDGE-TTS (MIỄN PHÍ, TỰ NHIÊN, KHÔNG GIỚI HẠN)
+    # 2. GỌI REST API CỦA ELEVENLABS (ĐA NGÔN NGỮ NHẬT - VIỆT - ANH)
+    if ELEVENLABS_API_KEY:
+        try:
+            print(f"[ELEVENLABS 🎙️] Đang gọi ElevenLabs TTS cho: '{text_to_speak[:35]}' (lang: {detected_lang})...")
+            await generate_elevenlabs_tts(text_to_speak, primary_cache_file, voice_id=custom_voice)
+            print(f"[ELEVENLABS ✅] Thành công! Đã lưu file vào audio_cache: {cache_filenames[0]}")
+            return FileResponse(
+                primary_cache_file,
+                media_type="audio/mpeg",
+                headers={
+                    "X-Cache": "MISS",
+                    "X-Source": "ElevenLabs",
+                    "Cache-Control": "public, max-age=31536000, immutable"
+                }
+            )
+        except Exception as el_err:
+            print(f"[ELEVENLABS WARN] Lỗi ElevenLabs: {el_err}. Đang chuyển sang Edge-TTS dự phòng...")
+
+    # 3. DỰ PHÒNG SERVER: EDGE-TTS NẾU ELEVENLABS HẾT QUOTA HOẶC LỖI
     try:
-        await generate_edge_tts(text_to_speak, voice, cache_filepath)
+        edge_voice = EDGE_VOICES.get(detected_lang) or EDGE_VOICES.get(detected_lang.split('-')[0]) or 'ja-JP-NanamiNeural'
+        if detected_lang == 'vi-VN':
+            edge_voice = 'vi-VN-HoaiMyNeural'
+        await generate_edge_tts(text_to_speak, edge_voice, primary_cache_file)
+        print(f"[EDGE-TTS ✅] Đã sinh âm thanh dự phòng qua Edge-TTS: {cache_filenames[0]}")
         return FileResponse(
-            cache_filepath,
+            primary_cache_file,
             media_type="audio/mpeg",
             headers={
                 "X-Cache": "MISS",
+                "X-Source": "Edge-TTS",
                 "Cache-Control": "public, max-age=31536000, immutable"
             }
         )
     except Exception as edge_err:
-        print(f"[EDGE-TTS WARN] Lỗi Edge-TTS: {edge_err}. Đang thử ElevenLabs...")
-        
-        # 3. DỰ PHÒNG ELEVENLABS NẾU CÓ KEY
-        if ELEVENLABS_API_KEY:
-            try:
-                await generate_elevenlabs_tts(text_to_speak, cache_filepath)
-                return FileResponse(
-                    cache_filepath,
-                    media_type="audio/mpeg",
-                    headers={"X-Cache": "MISS", "Cache-Control": "public, max-age=31536000, immutable"}
-                )
-            except Exception as el_err:
-                print(f"[ELEVENLABS WARN] Lỗi ElevenLabs: {el_err}")
-
-        # Nếu cả 2 đều lỗi, trả về lỗi để Frontend lập tức fallback sang Web Speech Synthesis
+        print(f"[TTS ERROR] Cả ElevenLabs và Edge-TTS đều không thể tạo âm thanh: {edge_err}")
         raise HTTPException(
             status_code=500,
-            detail=f"Không thể sinh âm thanh TTS từ server ({str(edge_err)}). Sử dụng Web Speech API thay thế."
+            detail=f"Lỗi tạo âm thanh từ server: {str(edge_err)}"
         )
 
 @app.get("/api/tts")
 async def tts_get(text: str = Query(...), lang: Optional[str] = Query(None), voice: Optional[str] = Query(None)):
-    """Phát âm qua GET request (dễ nhúng trực tiếp vào thẻ <audio src=...>)"""
+    """Phát âm qua GET request (dễ nhúng trực tiếp hoặc test trên trình duyệt)"""
     return await process_tts(text, lang, voice)
 
 @app.post("/api/tts")
@@ -750,11 +764,11 @@ def run():
     print("=" * 64)
     print(f"👉 Địa chỉ truy cập Web:     http://localhost:{PORT}")
     print(f"👉 CSDL SQLite vĩnh viễn:    {DB_PATH}")
-    print(f"👉 API TTS Edge-TTS:         http://localhost:{PORT}/api/tts?text=桜&lang=ja-JP")
+    print(f"👉 API TTS:                  http://localhost:{PORT}/api/tts?text=桜&lang=ja-JP")
     print(f"👉 Trạng thái server & DB:   http://localhost:{PORT}/api/status")
     print(f"📁 Thư mục lưu Cache:        {CACHE_DIR}")
-    print(f"🎙️ Giọng đọc tiếng Nhật:     {EDGE_VOICES['ja-JP']} (Nanami Neural)")
-    print(f"🎙️ Giọng đọc tiếng Anh:      {EDGE_VOICES['en-US']} (Jenny Neural)")
+    print(f"🎙️ Giọng AI chính:           ElevenLabs ({ELEVENLABS_VOICE_ID} | {ELEVENLABS_MODEL_ID})")
+    print(f"🎙️ Giọng dự phòng:           Edge-TTS (Nanami / HoaiMy / Jenny)")
     print("=" * 64)
 
     import threading

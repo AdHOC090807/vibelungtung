@@ -346,6 +346,7 @@ class FlashLearnApp {
     this.backWord = document.getElementById('backWord');
     this.btnBackPlaySound = document.getElementById('btnBackPlaySound');
     this.backMeaning = document.getElementById('backMeaning');
+    this.btnMeaningSpeak = document.getElementById('btnMeaningSpeak');
     this.backExample = document.getElementById('backExample');
     this.backExampleMeaning = document.getElementById('backExampleMeaning');
     this.exampleBox = document.getElementById('exampleBox');
@@ -510,36 +511,21 @@ class FlashLearnApp {
     return cards[this.currentCardIndex];
   }
 
-  // Tự động nhận diện ngôn ngữ của từ vựng: Tiếng Trung, Tiếng Nhật, Tiếng Hàn, Tiếng Anh
+  // Tự động nhận diện ngôn ngữ văn bản: Tiếng Nhật (ja-JP), Tiếng Việt (vi-VN), Tiếng Anh (en-US)
   detectLanguage(text) {
     if (!text) return 'en-US';
 
-    const deck = this.getCurrentDeck();
-
-    // 1. Tiếng Nhật: Chứa ký tự Hiragana hoặc Katakana
-    if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) {
+    // 1. Tiếng Nhật: Chứa ký tự Hiragana, Katakana hoặc Kanji
+    if (/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text)) {
       return 'ja-JP';
     }
 
-    // 2. Tiếng Hàn: Chứa ký tự Hangul
-    if (/[\uAC00-\uD7AF\u1100-\u11FF]/.test(text)) {
-      return 'ko-KR';
+    // 2. Tiếng Việt: Chứa ký tự có dấu hoặc chữ đ/Đ
+    if (/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i.test(text)) {
+      return 'vi-VN';
     }
 
-    // 3. Chữ Hán (CJK Ideographs):
-    // Theo yêu cầu người dùng: Nếu từ vựng là chữ Hán -> tự động nhận diện sang giọng đọc Tiếng Trung (zh-CN)
-    // Trừ khi bộ thẻ được người dùng chủ động gán cố định là Tiếng Nhật (ja-JP)
-    if (/[\u4E00-\u9FFF]/.test(text)) {
-      if (deck && deck.lang === 'ja-JP') return 'ja-JP';
-      return 'zh-CN';
-    }
-
-    // 4. Chữ cái Latinh: Tiếng Anh (en-US)
-    if (/[a-zA-Z]/.test(text)) {
-      return 'en-US';
-    }
-
-    if (deck && deck.lang && deck.lang !== 'auto') return deck.lang;
+    // 3. Mặc định còn lại: Tiếng Anh
     return 'en-US';
   }
 
@@ -675,10 +661,34 @@ class FlashLearnApp {
 
   flipCard() {
     this.isFlipped = !this.isFlipped;
+    this.stopAudio();
+
     if (this.isFlipped) {
       this.flashcard.classList.add('is-flipped');
+      // Khi người dùng bấm lật sang Mặt sau: Tự động đọc nghĩa (tiếng Việt) ở mặt sau
+      if (this.isAutoPlay) {
+        const card = this.getCurrentCard();
+        if (card && card.meaning) {
+          setTimeout(() => {
+            if (this.isFlipped) {
+              this.playAudio(card.meaning);
+            }
+          }, 180);
+        }
+      }
     } else {
       this.flashcard.classList.remove('is-flipped');
+      // Khi người dùng lật về Mặt trước: Tự động đọc từ vựng ở mặt trước
+      if (this.isAutoPlay) {
+        const card = this.getCurrentCard();
+        if (card && card.word) {
+          setTimeout(() => {
+            if (!this.isFlipped) {
+              this.playAudio(card.word);
+            }
+          }, 180);
+        }
+      }
     }
   }
 
@@ -764,13 +774,18 @@ class FlashLearnApp {
     this.updateAutoPlayUI();
 
     if (this.isAutoPlay) {
-      this.showToast('🔊 Đã BẬT tự động đọc từ khi chuyển thẻ!');
+      this.showToast('🔊 Đã BẬT tự động đọc AI theo từng mặt thẻ!');
       const card = this.getCurrentCard();
-      if (card && card.word) {
-        this.playAudio(card.word);
+      if (card) {
+        if (this.isFlipped && card.meaning) {
+          this.playAudio(card.meaning);
+        } else if (!this.isFlipped && card.word) {
+          this.playAudio(card.word);
+        }
       }
     } else {
-      this.showToast('🔇 Đã TẮT tự động đọc từ');
+      this.stopAudio();
+      this.showToast('🔇 Đã TẮT tự động đọc');
     }
   }
 
@@ -788,12 +803,15 @@ class FlashLearnApp {
   }
 
   checkAndAutoPlay() {
-    if (this.isAutoPlay) {
+    if (this.isAutoPlay && !this.isFlipped) {
       const card = this.getCurrentCard();
       if (card && card.word) {
+        this.stopAudio();
         setTimeout(() => {
-          this.playAudio(card.word);
-        }, 120);
+          if (!this.isFlipped) {
+            this.playAudio(card.word);
+          }
+        }, 150);
       }
     }
   }
@@ -836,22 +854,22 @@ class FlashLearnApp {
         <i data-lucide="globe" class="w-3.5 h-3.5 text-indigo-600"></i>
         <span>GitHub Pages (Trực tuyến)</span>
       `;
-      this.elevenLabsStatusBadge.title = 'Đang chạy trực tiếp trên GitHub Pages!\n- Âm thanh: Trực tuyến chuẩn tức thì (Native Stream + Web Speech)\n- Dữ liệu: Lưu an toàn trên trình duyệt (LocalStorage)\n- Khi muốn dùng SQLite & giọng Nanami AI: hãy tải về và chạy start-server.bat';
+      this.elevenLabsStatusBadge.title = 'Đang chạy trực tiếp trên GitHub Pages!\n- Âm thanh: Trực tuyến chuẩn tức thì (Native Stream + Web Speech)\n- Dữ liệu: Lưu an toàn trên trình duyệt (LocalStorage)\n- Khi muốn dùng SQLite & giọng ElevenLabs AI: hãy tải về và chạy start-server.bat';
     } else if (isOnline && data) {
-      this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 cursor-pointer shadow-sm hover:bg-emerald-100 transition';
+      this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60 cursor-pointer shadow-sm hover:bg-violet-100 transition';
       this.elevenLabsStatusBadge.innerHTML = `
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-600"></i>
-        <span>Edge-TTS (Nanami 🇯🇵) + SQLite</span>
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-violet-600"></i>
+        <span>ElevenLabs AI (Đa ngôn ngữ) + SQLite</span>
       `;
-      this.elevenLabsStatusBadge.title = `Server Full-stack & SQLite đang hoạt động!\nCSDL: SQLite (flashcards.db - ${data.cards_count} thẻ)\nGiọng đọc: Edge-TTS (${data.tts_default_voice_ja}) + ElevenLabs\nCache: ${data.cache_count} từ (${data.cache_size_mb} MB)\nBấm vào để xem thông tin chi tiết.`;
+      this.elevenLabsStatusBadge.title = `Server Full-stack & SQLite đang hoạt động!\nCSDL: SQLite (flashcards.db - ${data.cards_count} thẻ)\nGiọng đọc: ElevenLabs AI (${data.elevenlabs_model_id || 'eleven_flash_v2_5'})\nCache: ${data.cache_count} file (${data.cache_size_mb} MB)\nBấm vào để xem thông tin chi tiết.`;
     } else {
       this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200 transition';
       this.elevenLabsStatusBadge.innerHTML = `
         <span class="w-2 h-2 rounded-full bg-amber-500"></span>
         <span>Bật Server Full-stack</span>
       `;
-      this.elevenLabsStatusBadge.title = 'Nhấp đúp vào file start-server.bat để khởi chạy server Full-stack (FastAPI + SQLite + Edge-TTS)!';
+      this.elevenLabsStatusBadge.title = 'Nhấp đúp vào file start-server.bat để khởi chạy server Full-stack (FastAPI + SQLite + ElevenLabs)!';
     }
     lucide.createIcons();
   }
@@ -889,24 +907,42 @@ class FlashLearnApp {
 
   showServerInfo() {
     if (window.location.hostname.includes('github.io')) {
-      this.showToast('🌐 Ứng dụng đang hoạt động trực tuyến trên GitHub Pages! Dữ liệu được lưu trên trình duyệt của bạn và phát âm chuẩn tức thì.');
+      this.showToast('🌐 Ứng dụng đang hoạt động trực tuyến trên GitHub Pages! Dữ liệu được lưu trên trình duyệt của bạn.');
     } else if (this._isServerOnline) {
-      this.showToast('🚀 Server Full-stack (FastAPI) & CSDL SQLite (flashcards.db) đang kết nối! Giọng đọc Edge-TTS tự nhiên & có lưu cache.');
+      this.showToast('🚀 Server Full-stack (FastAPI) & CSDL SQLite (flashcards.db) đang kết nối! Giọng đọc ElevenLabs AI đa ngôn ngữ & lưu cache.');
     } else {
-      this.showToast('💡 Hãy nhấp đúp file start-server.bat (hoặc chạy "py server.py") để kích hoạt server FastAPI + SQLite + Edge-TTS!');
+      this.showToast('💡 Hãy nhấp đúp file start-server.bat (hoặc chạy "py server.py") để kích hoạt server FastAPI + SQLite + ElevenLabs!');
     }
+  }
+
+  stopAudio() {
+    if (this._currentAudio) {
+      try {
+        this._currentAudio.pause();
+        this._currentAudio.currentTime = 0;
+      } catch (e) {}
+      this._currentAudio = null;
+    }
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
+    }
+    this.stopAudioAnimation();
   }
 
   startAudioAnimation() {
     if (this.btnPlaySound) this.btnPlaySound.classList.add('playing-audio');
     if (this.btnWordSpeak) this.btnWordSpeak.classList.add('playing-audio');
     if (this.btnBackPlaySound) this.btnBackPlaySound.classList.add('playing-audio');
+    if (this.btnMeaningSpeak) this.btnMeaningSpeak.classList.add('playing-audio');
   }
 
   stopAudioAnimation() {
     if (this.btnPlaySound) this.btnPlaySound.classList.remove('playing-audio');
     if (this.btnWordSpeak) this.btnWordSpeak.classList.remove('playing-audio');
     if (this.btnBackPlaySound) this.btnBackPlaySound.classList.remove('playing-audio');
+    if (this.btnMeaningSpeak) this.btnMeaningSpeak.classList.remove('playing-audio');
   }
 
   playAudioUrl(url, onError = null) {
@@ -935,103 +971,80 @@ class FlashLearnApp {
   }
 
   // ==================== MULTI-TIER AUDIO PLAYER ====================
-  // Tier 1: FastAPI /api/tts (Edge-TTS Nanami Neural + Persistent audio_cache + ElevenLabs fallback)
-  // Tier 2: Youdao Dictionary Native Audio Stream (hỗ trợ Tiếng Trung zh, Tiếng Nhật jap, Tiếng Anh type=2)
-  // Tier 3: Web Speech Synthesis (offline fallback)
+  // Tier 1: FastAPI POST /api/tts (ElevenLabs AI Multilingual + audio_cache MD5)
+  // Tier 2: Web Speech Synthesis Fallback (bảo đảm 100% mọi trường hợp đều phát ra tiếng)
   async playAudio(rawText, explicitLang = null) {
     if (!rawText) return;
 
-    const deck = this.getCurrentDeck();
-    let targetLang = explicitLang;
-    if (!targetLang) {
-      targetLang = this.detectLanguage(rawText);
-      // Nếu deck có chỉ định tiếng Nhật và từ là Kanji, giữ tiếng Nhật
-      if (deck && deck.lang === 'ja-JP' && /[\u4E00-\u9FFF]/.test(rawText)) {
-        targetLang = 'ja-JP';
-      }
-    }
-
+    // Tự động nhận diện ngôn ngữ văn bản: ja-JP (Nhật), vi-VN (Việt), en-US (Anh)
+    const targetLang = explicitLang || this.detectLanguage(rawText);
     const clean = this.cleanTextForSpeech(rawText, targetLang);
     const textToSpeak = clean || rawText;
 
-    const isJapanese = targetLang.startsWith('ja');
-    const isChinese = targetLang.startsWith('zh');
-    const isKorean = targetLang.startsWith('ko');
-    const isEnglish = targetLang.startsWith('en') || (!isJapanese && !isChinese && !isKorean);
-
-    const langCode = isJapanese ? 'ja-JP' : (isChinese ? 'zh-CN' : (isKorean ? 'ko-KR' : 'en-US'));
-    const langLabel = isJapanese ? 'Tiếng Nhật 🇯🇵 (Nanami AI)' : (isChinese ? 'Tiếng Trung 🇨🇳' : (isKorean ? 'Tiếng Hàn 🇰🇷' : 'Tiếng Anh 🇬🇧'));
+    const langLabels = {
+      'ja-JP': 'Tiếng Nhật 🇯🇵',
+      'vi-VN': 'Tiếng Việt 🇻🇳',
+      'en-US': 'Tiếng Anh 🇬🇧'
+    };
+    const langLabel = langLabels[targetLang] || 'Đa ngôn ngữ 🌐';
 
     // Dừng âm thanh đang phát trước đó
-    if (this._currentAudio) {
-      try {
-        this._currentAudio.pause();
-        this._currentAudio.currentTime = 0;
-      } catch (e) {}
-      this.stopAudioAnimation();
-    }
+    this.stopAudio();
 
-    const cacheKey = `${textToSpeak.toLowerCase().trim()}:${langCode}`;
+    const cacheKey = `${textToSpeak.toLowerCase().trim()}:${targetLang}`;
 
     // 1. Kiểm tra cache trong bộ nhớ RAM trình duyệt
     if (this._audioCache && this._audioCache.has(cacheKey)) {
       this.showToast(`🔊 ${langLabel} ⚡ [Audio Cache]`);
       const cachedUrl = this._audioCache.get(cacheKey);
       this.playAudioUrl(cachedUrl, () => {
-        this.fallbackWebSpeech(textToSpeak, langCode);
+        this.fallbackWebSpeech(textToSpeak, targetLang);
       });
       return;
     }
 
-    this.showToast(`🔊 Đang phát âm (${langLabel})...`);
+    this.showToast(`🎙️ Đang phát âm (${langLabel})...`);
 
-    // 2. GỌI API /api/tts CỦA SERVER.PY NẾU SERVER ONLINE (EDGE-TTS + AUDIO_CACHE + ELEVENLABS)
+    // 2. GỌI API POST /api/tts CỦA SERVER (ELEVENLABS + AUDIO_CACHE)
     let serverSucceeded = false;
     if (this._isServerOnline) {
-      const ttsUrl = `${this._serverBaseUrl}/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${encodeURIComponent(langCode)}`;
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-        const response = await fetch(ttsUrl, { signal: controller.signal, mode: 'cors' });
+        const response = await fetch(`${this._serverBaseUrl}/api/tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: textToSpeak,
+            lang: targetLang
+          }),
+          signal: controller.signal
+        });
         clearTimeout(timeoutId);
 
         if (response.ok) {
           const isCacheHit = response.headers.get('X-Cache') === 'HIT';
-          this.showToast(isCacheHit ? `🔊 ${langLabel} ⚡ [Audio Cache]` : `✨ ${langLabel} 🎙️ [Edge-TTS Nanami]`);
+          const source = response.headers.get('X-Source') || 'ElevenLabs';
+          this.showToast(isCacheHit ? `🔊 ${langLabel} ⚡ [Audio Cache]` : `✨ ${langLabel} 🎙️ [${source} AI]`);
           const audioBlob = await response.blob();
           const objectUrl = URL.createObjectURL(audioBlob);
           this._audioCache.set(cacheKey, objectUrl);
           this.playAudioUrl(objectUrl, () => {
-            this.fallbackWebSpeech(textToSpeak, langCode);
+            this.fallbackWebSpeech(textToSpeak, targetLang);
           });
           serverSucceeded = true;
           return;
         }
       } catch (err) {
-        console.warn('[FlashLearn] Server /api/tts lỗi, chuyển ngay sang luồng dự phòng:', err);
+        console.warn('[FlashLearn] Server /api/tts lỗi, chuyển ngay sang luồng dự phòng Web Speech:', err);
       }
     }
 
-    // 3. NẾU SERVER CHƯA BẬT HOẶC LỖI -> DÙNG NGAY WEB SPEECH SYNTHESIS / YOUDAO NATIVE
+    // 3. FALLBACK BẮT BUỘC: NẾU GỌI /api/tts BỊ LỖI HOẶC CHƯA BẬT SERVER
+    // Dùng ngay window.speechSynthesis với đúng mã ngôn ngữ vừa nhận diện để phát âm
     if (!serverSucceeded) {
-      let onlineFallbackUrl = '';
-      if (isJapanese) {
-        onlineFallbackUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&le=jap`;
-      } else if (isChinese) {
-        onlineFallbackUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&le=zh`;
-      } else if (isEnglish) {
-        onlineFallbackUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&type=2`;
-      }
-
-      if (onlineFallbackUrl) {
-        this.playAudioUrl(onlineFallbackUrl, () => {
-          console.warn('[FlashLearn] Luồng trực tuyến gặp lỗi, phát âm ngay qua Web Speech Synthesis');
-          this.fallbackWebSpeech(textToSpeak, langCode);
-        });
-      } else {
-        this.fallbackWebSpeech(textToSpeak, langCode);
-      }
+      this.fallbackWebSpeech(textToSpeak, targetLang);
     }
   }
 
@@ -1726,6 +1739,15 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       const card = this.getCurrentCard();
       if (card) this.playAudio(card.word);
     });
+
+    if (this.btnMeaningSpeak) {
+      this.btnMeaningSpeak.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const card = this.getCurrentCard();
+        if (card && card.meaning) this.playAudio(card.meaning);
+      });
+    }
 
     this.btnPlayExampleSound.addEventListener('click', (e) => {
       e.stopPropagation();
