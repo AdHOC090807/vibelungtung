@@ -77,6 +77,72 @@ const DEFAULT_DECKS = [
         exampleMeaning: 'Tôi muốn trân trọng từng cuộc gặp gỡ như một duyên lành chỉ có một lần trong đời.',
         mastered: false,
         starred: true
+      },
+      {
+        id: 'jp7',
+        word: '友達 (ともだち)',
+        phonetic: 'tomodachi',
+        pos: 'danh từ',
+        meaning: 'Bạn bè, người bạn đồng hành',
+        example: '週末に友達と一緒に映画を見に行きます。',
+        exampleMeaning: 'Cuối tuần tôi đi xem phim cùng với bạn bè.',
+        mastered: false,
+        starred: false
+      },
+      {
+        id: 'jp8',
+        word: '約束 (やくそく)',
+        phonetic: 'yakusoku',
+        pos: 'danh từ / động từ',
+        meaning: 'Lời hứa, cuộc hẹn ước',
+        example: 'どんなことがあっても、約束を守ります。',
+        exampleMeaning: 'Dù có chuyện gì xảy ra, tôi cũng sẽ giữ trọn lời hứa.',
+        mastered: false,
+        starred: true
+      },
+      {
+        id: 'jp9',
+        word: '先生 (せんせい)',
+        phonetic: 'sensei',
+        pos: 'danh từ',
+        meaning: 'Thầy giáo, cô giáo, bác sĩ',
+        example: '先生、いつも熱心に教えてくださりありがとうございます。',
+        exampleMeaning: 'Thưa thầy cô, cảm ơn thầy cô đã luôn nhiệt tình chỉ dạy chúng em.',
+        mastered: false,
+        starred: false
+      },
+      {
+        id: 'jp10',
+        word: '家族 (かぞく)',
+        phonetic: 'kazoku',
+        pos: 'danh từ',
+        meaning: 'Gia đình, những người thân yêu nhất',
+        example: '私にとって家族が一番大切な存在です。',
+        exampleMeaning: 'Đối với tôi, gia đình là điều quan trọng và quý giá nhất.',
+        mastered: false,
+        starred: true
+      },
+      {
+        id: 'jp11',
+        word: '行く (いく)',
+        phonetic: 'iku',
+        pos: 'động từ nhóm 1',
+        meaning: 'Đi (di chuyển từ nơi này sang nơi khác)',
+        example: '来週、友達と日本へ旅行に行きます。',
+        exampleMeaning: 'Tuần sau tôi sẽ đi du lịch Nhật Bản cùng bạn bè.',
+        mastered: false,
+        starred: false
+      },
+      {
+        id: 'jp12',
+        word: '毎日 (まいにち)',
+        phonetic: 'mainichi',
+        pos: 'phó từ / danh từ',
+        meaning: 'Mỗi ngày, hàng ngày',
+        example: '毎日日本語の単語を10個覚えるようにしています。',
+        exampleMeaning: 'Mỗi ngày tôi đều cố gắng học thuộc 10 từ vựng tiếng Nhật.',
+        mastered: false,
+        starred: false
       }
     ]
   },
@@ -358,12 +424,23 @@ class FlashLearnApp {
     if (!this.decks || this.decks.length === 0) {
       this.decks = JSON.parse(JSON.stringify(DEFAULT_DECKS));
     } else {
-      // Ensure Japanese deck is present
-      const hasJapanese = this.decks.some(d => d.id === 'deck-japanese-n5' || (d.lang && d.lang.startsWith('ja')));
-      if (!hasJapanese) {
-        const jpDeck = DEFAULT_DECKS.find(d => d.id === 'deck-japanese-n5');
-        if (jpDeck) this.decks.unshift(JSON.parse(JSON.stringify(jpDeck)));
+      // Ensure Japanese deck is present & has all 12 default cards
+      let jpDeck = this.decks.find(d => d.id === 'deck-japanese-n5');
+      if (!jpDeck) {
+        jpDeck = this.decks.find(d => d.lang && d.lang.startsWith('ja'));
       }
+      const defaultJp = DEFAULT_DECKS.find(d => d.id === 'deck-japanese-n5');
+      if (!jpDeck) {
+        if (defaultJp) this.decks.unshift(JSON.parse(JSON.stringify(defaultJp)));
+      } else if (defaultJp) {
+        // Merge any default cards that aren't in jpDeck yet
+        defaultJp.cards.forEach(card => {
+          if (!jpDeck.cards.some(c => c.id === card.id || c.word === card.word)) {
+            jpDeck.cards.push(JSON.parse(JSON.stringify(card)));
+          }
+        });
+      }
+
       // Ensure Chinese deck is present
       const hasChinese = this.decks.some(d => d.id === 'deck-chinese-hsk' || (d.lang && d.lang.startsWith('zh')));
       if (!hasChinese) {
@@ -723,6 +800,14 @@ class FlashLearnApp {
 
   // ==================== FASTAPI FULL-STACK & AUDIO SYSTEM ====================
   async checkServerStatus() {
+    // Nếu đang chạy trên GitHub Pages (hoặc môi trường hosting tĩnh)
+    if (window.location.hostname.includes('github.io')) {
+      this._isServerOnline = false;
+      this.updateServerBadge(false, null, true);
+      console.log('[FlashLearn] Chạy trên GitHub Pages: Chế độ trực tuyến độc lập (Client-side Standalone)');
+      return;
+    }
+
     try {
       const res = await fetch(`${this._serverBaseUrl}/api/status`, { mode: 'cors' });
       if (res.ok) {
@@ -742,9 +827,17 @@ class FlashLearnApp {
     }
   }
 
-  updateServerBadge(isOnline, data = null) {
+  updateServerBadge(isOnline, data = null, isGitHubPages = false) {
     if (!this.elevenLabsStatusBadge) return;
-    if (isOnline && data) {
+    if (isGitHubPages) {
+      this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 cursor-pointer shadow-sm hover:bg-indigo-100 transition';
+      this.elevenLabsStatusBadge.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+        <i data-lucide="globe" class="w-3.5 h-3.5 text-indigo-600"></i>
+        <span>GitHub Pages (Trực tuyến)</span>
+      `;
+      this.elevenLabsStatusBadge.title = 'Đang chạy trực tiếp trên GitHub Pages!\n- Âm thanh: Trực tuyến chuẩn tức thì (Native Stream + Web Speech)\n- Dữ liệu: Lưu an toàn trên trình duyệt (LocalStorage)\n- Khi muốn dùng SQLite & giọng Nanami AI: hãy tải về và chạy start-server.bat';
+    } else if (isOnline && data) {
       this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 cursor-pointer shadow-sm hover:bg-emerald-100 transition';
       this.elevenLabsStatusBadge.innerHTML = `
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -795,7 +888,9 @@ class FlashLearnApp {
   }
 
   showServerInfo() {
-    if (this._isServerOnline) {
+    if (window.location.hostname.includes('github.io')) {
+      this.showToast('🌐 Ứng dụng đang hoạt động trực tuyến trên GitHub Pages! Dữ liệu được lưu trên trình duyệt của bạn và phát âm chuẩn tức thì.');
+    } else if (this._isServerOnline) {
       this.showToast('🚀 Server Full-stack (FastAPI) & CSDL SQLite (flashcards.db) đang kết nối! Giọng đọc Edge-TTS tự nhiên & có lưu cache.');
     } else {
       this.showToast('💡 Hãy nhấp đúp file start-server.bat (hoặc chạy "py server.py") để kích hoạt server FastAPI + SQLite + Edge-TTS!');
@@ -890,31 +985,32 @@ class FlashLearnApp {
 
     this.showToast(`🔊 Đang phát âm (${langLabel})...`);
 
-    // 2. GỌI API /api/tts CỦA SERVER.PY (EDGE-TTS + AUDIO_CACHE + ELEVENLABS)
-    const ttsUrl = `${this._serverBaseUrl}/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${encodeURIComponent(langCode)}`;
-
+    // 2. GỌI API /api/tts CỦA SERVER.PY NẾU SERVER ONLINE (EDGE-TTS + AUDIO_CACHE + ELEVENLABS)
     let serverSucceeded = false;
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
+    if (this._isServerOnline) {
+      const ttsUrl = `${this._serverBaseUrl}/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${encodeURIComponent(langCode)}`;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-      const response = await fetch(ttsUrl, { signal: controller.signal, mode: 'cors' });
-      clearTimeout(timeoutId);
+        const response = await fetch(ttsUrl, { signal: controller.signal, mode: 'cors' });
+        clearTimeout(timeoutId);
 
-      if (response.ok) {
-        const isCacheHit = response.headers.get('X-Cache') === 'HIT';
-        this.showToast(isCacheHit ? `🔊 ${langLabel} ⚡ [Audio Cache]` : `✨ ${langLabel} 🎙️ [Edge-TTS Nanami]`);
-        const audioBlob = await response.blob();
-        const objectUrl = URL.createObjectURL(audioBlob);
-        this._audioCache.set(cacheKey, objectUrl);
-        this.playAudioUrl(objectUrl, () => {
-          this.fallbackWebSpeech(textToSpeak, langCode);
-        });
-        serverSucceeded = true;
-        return;
+        if (response.ok) {
+          const isCacheHit = response.headers.get('X-Cache') === 'HIT';
+          this.showToast(isCacheHit ? `🔊 ${langLabel} ⚡ [Audio Cache]` : `✨ ${langLabel} 🎙️ [Edge-TTS Nanami]`);
+          const audioBlob = await response.blob();
+          const objectUrl = URL.createObjectURL(audioBlob);
+          this._audioCache.set(cacheKey, objectUrl);
+          this.playAudioUrl(objectUrl, () => {
+            this.fallbackWebSpeech(textToSpeak, langCode);
+          });
+          serverSucceeded = true;
+          return;
+        }
+      } catch (err) {
+        console.warn('[FlashLearn] Server /api/tts lỗi, chuyển ngay sang luồng dự phòng:', err);
       }
-    } catch (err) {
-      console.warn('[FlashLearn] Server /api/tts chưa bật hoặc lỗi, chuyển ngay sang luồng dự phòng:', err);
     }
 
     // 3. NẾU SERVER CHƯA BẬT HOẶC LỖI -> DÙNG NGAY WEB SPEECH SYNTHESIS / YOUDAO NATIVE
