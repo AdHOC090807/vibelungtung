@@ -81,6 +81,80 @@ const DEFAULT_DECKS = [
     ]
   },
   {
+    id: 'deck-chinese-hsk',
+    name: '🇨🇳 Tiếng Trung HSK & Giao Tiếp',
+    lang: 'auto',
+    createdAt: Date.now() - 500,
+    cards: [
+      {
+        id: 'zh1',
+        word: '你好',
+        phonetic: 'nǐ hǎo',
+        pos: 'thán từ / chào hỏi',
+        meaning: 'Xin chào (lời chào lịch sự, thân thiện)',
+        example: '你好！很高兴认识你。',
+        exampleMeaning: 'Xin chào! Rất vui được làm quen với bạn.',
+        mastered: false,
+        starred: true
+      },
+      {
+        id: 'zh2',
+        word: '谢谢',
+        phonetic: 'xièxie',
+        pos: 'động từ / cảm ơn',
+        meaning: 'Cảm ơn, cảm tạ sự giúp đỡ',
+        example: '非常感谢你的热情帮助！',
+        exampleMeaning: 'Vô cùng cảm ơn sự giúp đỡ nhiệt tình của bạn!',
+        mastered: false,
+        starred: false
+      },
+      {
+        id: 'zh3',
+        word: '学习',
+        phonetic: 'xuéxí',
+        pos: 'động từ / danh từ',
+        meaning: 'Học tập, rèn luyện kiến thức',
+        example: '每天努力学习中文，进步很快。',
+        exampleMeaning: 'Mỗi ngày chăm chỉ học tiếng Trung, tiến bộ rất nhanh.',
+        mastered: true,
+        starred: false
+      },
+      {
+        id: 'zh4',
+        word: '朋友',
+        phonetic: 'péngyou',
+        pos: 'danh từ',
+        meaning: 'Bạn bè, bạn hữu tri kỷ',
+        example: '海内存知己，天涯若比邻。',
+        exampleMeaning: 'Trong bốn bể có tri kỷ, thì chân trời cũng gần gũi như hàng xóm.',
+        mastered: false,
+        starred: true
+      },
+      {
+        id: 'zh5',
+        word: '世界',
+        phonetic: 'shìjiè',
+        pos: 'danh từ',
+        meaning: 'Thế giới, vũ trụ bao la',
+        example: '世界很大，我想去看看。',
+        exampleMeaning: 'Thế giới rất rộng lớn, tôi muốn đi ngắm nhìn.',
+        mastered: false,
+        starred: false
+      },
+      {
+        id: 'zh6',
+        word: '再见',
+        phonetic: 'zàijiàn',
+        pos: 'từ chào tạm biệt',
+        meaning: 'Tạm biệt (hẹn sớm gặp lại)',
+        example: '明天见，路上小心，再见！',
+        exampleMeaning: 'Ngày mai gặp lại nhé, đi đường cẩn thận, tạm biệt!',
+        mastered: false,
+        starred: false
+      }
+    ]
+  },
+  {
     id: 'deck-ielts-core',
     name: '🇬🇧 Từ vựng IELTS & Giao tiếp Cốt Lõi',
     lang: 'en-US',
@@ -147,7 +221,7 @@ const DEFAULT_DECKS = [
 
 class FlashLearnApp {
   constructor() {
-    this.storageKey = 'flashlearn_app_data_v4';
+    this.storageKey = 'flashlearn_app_data_v5';
     this.decks = [];
     this.currentDeckId = null;
     this.currentCardIndex = 0;
@@ -155,6 +229,9 @@ class FlashLearnApp {
     this.activeFilter = 'all'; // 'all' | 'learning' | 'starred'
     this.parsedPdfCards = [];
     this._currentAudio = null;
+    this._audioCache = new Map();
+    this._serverBaseUrl = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+    this._elevenLabsOnline = false;
     this.isAutoPlay = localStorage.getItem('flashlearn_autoplay') === 'true';
 
     this.initElements();
@@ -162,6 +239,7 @@ class FlashLearnApp {
     this.initEvents();
     this.initTheme();
     this.updateAutoPlayUI();
+    this.checkElevenLabsServer();
     this.render();
   }
 
@@ -177,6 +255,7 @@ class FlashLearnApp {
     this.progressBar = document.getElementById('progressBar');
     this.btnShuffle = document.getElementById('btnShuffle');
     this.btnResetProgress = document.getElementById('btnResetProgress');
+    this.elevenLabsStatusBadge = document.getElementById('elevenLabsStatusBadge');
 
     // Auto Play Toggle
     this.btnToggleAutoPlay = document.getElementById('btnToggleAutoPlay');
@@ -190,8 +269,10 @@ class FlashLearnApp {
     this.flashcard = document.getElementById('flashcard');
     this.frontPos = document.getElementById('frontPos');
     this.frontLangBadge = document.getElementById('frontLangBadge');
+    this.frontAiBadge = document.getElementById('frontAiBadge');
     this.btnStarCard = document.getElementById('btnStarCard');
     this.btnPlaySound = document.getElementById('btnPlaySound');
+    this.btnWordSpeak = document.getElementById('btnWordSpeak');
     this.frontWord = document.getElementById('frontWord');
     this.frontPhonetic = document.getElementById('frontPhonetic');
 
@@ -226,6 +307,7 @@ class FlashLearnApp {
     this.aiCodeInput = document.getElementById('aiCodeInput');
     this.btnInsertSampleEnglish = document.getElementById('btnInsertSampleEnglish');
     this.btnInsertSampleJapanese = document.getElementById('btnInsertSampleJapanese');
+    this.btnInsertSampleChinese = document.getElementById('btnInsertSampleChinese');
     this.dropZone = document.getElementById('dropZone');
     this.pdfFileInput = document.getElementById('pdfFileInput');
     this.pdfParsingStatus = document.getElementById('pdfParsingStatus');
@@ -237,6 +319,7 @@ class FlashLearnApp {
     // Prompt Switcher
     this.btnPromptLangEn = document.getElementById('btnPromptLangEn');
     this.btnPromptLangJp = document.getElementById('btnPromptLangJp');
+    this.btnPromptLangZh = document.getElementById('btnPromptLangZh');
     this.promptTitleLabel = document.getElementById('promptTitleLabel');
     this.btnCopyPrompt = document.getElementById('btnCopyPrompt');
     this.copyPromptLabel = document.getElementById('copyPromptLabel');
@@ -260,7 +343,8 @@ class FlashLearnApp {
   loadData() {
     let saved = null;
     try {
-      saved = localStorage.getItem('flashlearn_app_data_v4') ||
+      saved = localStorage.getItem('flashlearn_app_data_v5') ||
+              localStorage.getItem('flashlearn_app_data_v4') ||
               localStorage.getItem('flashlearn_app_data_v3') || 
               localStorage.getItem('flashlearn_app_data_v2') || 
               localStorage.getItem('flashlearn_app_data_v1');
@@ -279,6 +363,12 @@ class FlashLearnApp {
       if (!hasJapanese) {
         const jpDeck = DEFAULT_DECKS.find(d => d.id === 'deck-japanese-n5');
         if (jpDeck) this.decks.unshift(JSON.parse(JSON.stringify(jpDeck)));
+      }
+      // Ensure Chinese deck is present
+      const hasChinese = this.decks.some(d => d.id === 'deck-chinese-hsk' || (d.lang && d.lang.startsWith('zh')));
+      if (!hasChinese) {
+        const zhDeck = DEFAULT_DECKS.find(d => d.id === 'deck-chinese-hsk');
+        if (zhDeck) this.decks.splice(1, 0, JSON.parse(JSON.stringify(zhDeck)));
       }
     }
 
@@ -343,34 +433,57 @@ class FlashLearnApp {
     return cards[this.currentCardIndex];
   }
 
-  // Detect language of word: Japanese, Korean, Chinese, or English
+  // Tự động nhận diện ngôn ngữ của từ vựng: Tiếng Trung, Tiếng Nhật, Tiếng Hàn, Tiếng Anh
   detectLanguage(text) {
     if (!text) return 'en-US';
-    // Japanese: Hiragana, Katakana, or typical Japanese Kanji
+
+    const deck = this.getCurrentDeck();
+
+    // 1. Tiếng Nhật: Chứa ký tự Hiragana hoặc Katakana
     if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) {
       return 'ja-JP';
     }
-    // Korean: Hangul
-    if (/[\uAC00-\uD7A3\u1100-\u11FF]/.test(text)) {
+
+    // 2. Tiếng Hàn: Chứa ký tự Hangul
+    if (/[\uAC00-\uD7AF\u1100-\u11FF]/.test(text)) {
       return 'ko-KR';
     }
-    // Kanji / CJK ideographs
+
+    // 3. Chữ Hán (CJK Ideographs):
+    // Theo yêu cầu người dùng: Nếu từ vựng là chữ Hán -> tự động nhận diện sang giọng đọc Tiếng Trung (zh-CN)
+    // Trừ khi bộ thẻ được người dùng chủ động gán cố định là Tiếng Nhật (ja-JP)
     if (/[\u4E00-\u9FFF]/.test(text)) {
-      const deck = this.getCurrentDeck();
-      if (deck && deck.lang && deck.lang !== 'auto') return deck.lang;
-      return 'ja-JP'; // Default Kanji to Japanese
+      if (deck && deck.lang === 'ja-JP') return 'ja-JP';
+      return 'zh-CN';
     }
+
+    // 4. Chữ cái Latinh: Tiếng Anh (en-US)
+    if (/[a-zA-Z]/.test(text)) {
+      return 'en-US';
+    }
+
+    if (deck && deck.lang && deck.lang !== 'auto') return deck.lang;
     return 'en-US';
   }
 
   cleanTextForSpeech(text, lang) {
     if (!text) return '';
-    // If Japanese and contains reading in parentheses like "桜 (さくら)"
-    const jpMatch = text.match(/\(([\u3040-\u309F\u30A0-\u30FF]+)\)/);
-    if (lang === 'ja-JP' && jpMatch) {
-      return jpMatch[1]; // speak the kana reading directly
+    if (lang.startsWith('ja')) {
+      // Nếu là tiếng Nhật và có cách đọc Hiragana trong ngoặc ví dụ "桜 (さくら)" -> đọc "さくら"
+      const jpMatch = text.match(/\(([\u3040-\u309F\u30A0-\u30FF]+)\)/);
+      if (jpMatch) return jpMatch[1];
     }
-    // Remove parentheses and punctuation
+    if (lang.startsWith('zh')) {
+      // Bỏ pinyin hoặc chú thích trong ngoặc đơn/vuông ví dụ "你好 (nǐ hǎo)" -> "你好"
+      const cleaned = text.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, '').trim();
+      if (cleaned) return cleaned;
+    }
+    if (lang.startsWith('en')) {
+      // Bỏ ký hiệu phiên âm IPA hoặc chú thích ví dụ "resilient (/rɪˈzɪliənt/)" -> "resilient"
+      const cleaned = text.replace(/\/[^\/]+\//g, '').replace(/\([^)]*\)/g, '').trim();
+      if (cleaned) return cleaned;
+    }
+    // Dọn dẹp dấu ngoặc đơn, ngoặc vuông và gạch chéo
     return text.replace(/[\(\)\[\]\/]/g, ' ').trim();
   }
 
@@ -407,7 +520,9 @@ class FlashLearnApp {
       return;
     }
 
-    const cardLang = deck.lang && deck.lang !== 'auto' ? deck.lang : this.detectLanguage(currentCard.word);
+    const cardLang = (deck.lang && deck.lang !== 'auto') 
+      ? (deck.lang === 'ja-JP' && /[\u4E00-\u9FFF]/.test(currentCard.word) ? 'ja-JP' : this.detectLanguage(currentCard.word))
+      : this.detectLanguage(currentCard.word);
 
     // Front Face (TỪ VỰNG)
     this.frontWord.textContent = currentCard.word || 'Chưa có từ';
@@ -416,18 +531,22 @@ class FlashLearnApp {
     this.frontPos.textContent = currentCard.pos || 'Từ vựng';
 
     // Lang badge
-    if (cardLang.startsWith('ja')) {
-      this.frontLangBadge.textContent = '🇯🇵 JP';
-      this.frontLangBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40';
+    if (cardLang.startsWith('zh')) {
+      this.frontLangBadge.textContent = '🇨🇳 Tiếng Trung';
+      this.frontLangBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40';
+      if (this.frontAiBadge) this.frontAiBadge.style.display = 'none';
+    } else if (cardLang.startsWith('ja')) {
+      this.frontLangBadge.textContent = '🇯🇵 Tiếng Nhật';
+      this.frontLangBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40';
+      if (this.frontAiBadge) this.frontAiBadge.style.display = 'none';
     } else if (cardLang.startsWith('ko')) {
-      this.frontLangBadge.textContent = '🇰🇷 KR';
-      this.frontLangBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-900/40';
-    } else if (cardLang.startsWith('zh')) {
-      this.frontLangBadge.textContent = '🇨🇳 CN';
-      this.frontLangBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40';
+      this.frontLangBadge.textContent = '🇰🇷 Tiếng Hàn';
+      this.frontLangBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-900/40';
+      if (this.frontAiBadge) this.frontAiBadge.style.display = 'none';
     } else {
-      this.frontLangBadge.textContent = '🇬🇧 EN';
-      this.frontLangBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/40';
+      this.frontLangBadge.textContent = '🇬🇧 Tiếng Anh';
+      this.frontLangBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/40';
+      if (this.frontAiBadge) this.frontAiBadge.style.display = 'inline-flex';
     }
 
     // Star icon
@@ -585,65 +704,180 @@ class FlashLearnApp {
     }
   }
 
-  // ==================== DUAL-ENGINE AUDIO PLAYER ====================
-  // Engine 1: Youdao Native Dictionary Audio Stream (zero referrer blocks, instant MP3)
-  // Engine 2: Google Translate Audio Stream (no-referrer mode)
-  // Engine 3: Web Speech Synthesis (offline fallback)
-  playAudio(rawText, explicitLang = null) {
+  // ==================== ELEVENLABS AI VOICE & AUDIO SYSTEM ====================
+  async checkElevenLabsServer() {
+    try {
+      const res = await fetch(`${this._serverBaseUrl}/api/status`, { mode: 'cors' });
+      if (res.ok) {
+        const data = await res.json();
+        this._elevenLabsOnline = true;
+        if (this.elevenLabsStatusBadge) {
+          this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 cursor-pointer shadow-sm hover:bg-emerald-100 transition';
+          this.elevenLabsStatusBadge.innerHTML = `
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-600"></i>
+            <span>ElevenLabs AI (Flash 2.5)</span>
+          `;
+          this.elevenLabsStatusBadge.title = `Server ElevenLabs đang hoạt động!\nModel: ${data.model_id}\nGiọng đọc: ${data.voice_name}\nĐã lưu cache: ${data.cache_count} từ (${data.cache_size_mb} MB)\nBấm vào để xem thông tin.`;
+          lucide.createIcons();
+        }
+        console.log('[FlashLearn] ElevenLabs Server is online:', data);
+      }
+    } catch (e) {
+      this._elevenLabsOnline = false;
+      if (this.elevenLabsStatusBadge) {
+        this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 cursor-pointer hover:bg-amber-100 transition';
+        this.elevenLabsStatusBadge.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span>Bật Server AI</span>
+        `;
+        this.elevenLabsStatusBadge.title = 'Chưa bật server local. Nhấp đúp vào file start-server.bat để kích hoạt giọng đọc AI ElevenLabs!';
+        lucide.createIcons();
+      }
+    }
+  }
+
+  showElevenLabsInfo() {
+    if (this._elevenLabsOnline) {
+      this.showToast('🎙️ Giọng AI ElevenLabs (Flash 2.5) đang hoạt động! File âm thanh được tự động lưu Cache để không tốn điểm API.');
+    } else {
+      this.showToast('💡 Hãy nhấp đúp file start-server.bat (hoặc chạy "py server.py") để kích hoạt giọng đọc AI ElevenLabs!');
+    }
+  }
+
+  startAudioAnimation() {
+    if (this.btnPlaySound) this.btnPlaySound.classList.add('playing-audio');
+    if (this.btnWordSpeak) this.btnWordSpeak.classList.add('playing-audio');
+    if (this.btnBackPlaySound) this.btnBackPlaySound.classList.add('playing-audio');
+  }
+
+  stopAudioAnimation() {
+    if (this.btnPlaySound) this.btnPlaySound.classList.remove('playing-audio');
+    if (this.btnWordSpeak) this.btnWordSpeak.classList.remove('playing-audio');
+    if (this.btnBackPlaySound) this.btnBackPlaySound.classList.remove('playing-audio');
+  }
+
+  playAudioUrl(url, onError = null) {
+    const audio = document.createElement('audio');
+    audio.referrerPolicy = 'no-referrer';
+    audio.src = url;
+    this._currentAudio = audio;
+
+    this.startAudioAnimation();
+
+    audio.onended = () => {
+      this.stopAudioAnimation();
+    };
+    audio.onerror = (e) => {
+      this.stopAudioAnimation();
+      if (typeof onError === 'function') onError(e);
+    };
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        this.stopAudioAnimation();
+        if (typeof onError === 'function') onError(err);
+      });
+    }
+  }
+
+  // ==================== MULTI-TIER AUDIO PLAYER ====================
+  // Tier 1: ElevenLabs AI Voice (model: eleven_flash_v2_5 + persistent disk cache khi bật server local)
+  // Tier 2: Youdao Dictionary Native Audio Stream (hỗ trợ Tiếng Trung zh, Tiếng Nhật jap, Tiếng Anh type=2, không bị chặn)
+  // Tier 3: Google Translate Audio Stream (no-referrer mode)
+  // Tier 4: Web Speech Synthesis (offline fallback)
+  async playAudio(rawText, explicitLang = null) {
     if (!rawText) return;
 
     const deck = this.getCurrentDeck();
-    let targetLang = explicitLang || (deck && deck.lang && deck.lang !== 'auto' ? deck.lang : this.detectLanguage(rawText));
+    let targetLang = explicitLang;
+    if (!targetLang) {
+      targetLang = this.detectLanguage(rawText);
+      // Nếu deck có chỉ định tiếng Nhật và từ là Kanji, giữ tiếng Nhật
+      if (deck && deck.lang === 'ja-JP' && /[\u4E00-\u9FFF]/.test(rawText)) {
+        targetLang = 'ja-JP';
+      }
+    }
 
     const clean = this.cleanTextForSpeech(rawText, targetLang);
     const textToSpeak = clean || rawText;
 
     const isJapanese = targetLang.startsWith('ja');
-    const isEnglish = targetLang.startsWith('en');
-    const langCode = isJapanese ? 'ja' : (isEnglish ? 'en' : (targetLang.startsWith('ko') ? 'ko' : 'zh-CN'));
-    const langLabel = isJapanese ? 'Tiếng Nhật 🇯🇵' : (langCode === 'en' ? 'Tiếng Anh 🇬🇧' : langCode);
+    const isChinese = targetLang.startsWith('zh');
+    const isKorean = targetLang.startsWith('ko');
+    const isEnglish = targetLang.startsWith('en') || (!isJapanese && !isChinese && !isKorean);
 
-    this.showToast(`🔊 Đang phát âm (${langLabel})...`);
+    const langCode = isJapanese ? 'ja' : (isChinese ? 'zh-CN' : (isKorean ? 'ko' : 'en'));
+    const langLabel = isJapanese ? 'Tiếng Nhật 🇯🇵' : (isChinese ? 'Tiếng Trung 🇨🇳' : (isKorean ? 'Tiếng Hàn 🇰🇷' : 'Tiếng Anh 🇬🇧'));
 
-    // Stop existing audio
+    // Dừng âm thanh đang phát trước đó
     if (this._currentAudio) {
       try {
         this._currentAudio.pause();
         this._currentAudio.currentTime = 0;
       } catch (e) {}
+      this.stopAudioAnimation();
     }
 
-    // Determine high-definition MP3 voice URL
+    // ========================================================
+    // ƯU TIÊN 1: ELEVENLABS AI VOICE CHO TIẾNG ANH (KÈM CACHE NẾU SERVER ĐANG CHẠY)
+    // ========================================================
+    if (isEnglish) {
+      const cacheKey = textToSpeak.toLowerCase().trim();
+
+      // 1. Kiểm tra cache trong bộ nhớ RAM trình duyệt
+      if (this._audioCache && this._audioCache.has(cacheKey)) {
+        this.showToast('🔊 ElevenLabs AI (Flash 2.5) ⚡ [Đã lưu cache]');
+        const cachedUrl = this._audioCache.get(cacheKey);
+        this.playAudioUrl(cachedUrl, () => {});
+        return;
+      }
+
+      // 2. Gọi Server local (/api/tts)
+      if (this._elevenLabsOnline) {
+        const ttsUrl = `${this._serverBaseUrl}/api/tts?text=${encodeURIComponent(textToSpeak)}`;
+        try {
+          const response = await fetch(ttsUrl, { mode: 'cors' });
+          if (response.ok) {
+            const isCacheHit = response.headers.get('X-Cache') === 'HIT';
+            this.showToast(isCacheHit ? '🔊 ElevenLabs AI (Flash 2.5) ⚡ [Đã lưu cache]' : '✨ ElevenLabs AI (Flash 2.5) 🎙️ [Mới tải & Đã lưu cache]');
+            const audioBlob = await response.blob();
+            const objectUrl = URL.createObjectURL(audioBlob);
+            this._audioCache.set(cacheKey, objectUrl);
+            this.playAudioUrl(objectUrl, () => {});
+            return;
+          }
+        } catch (err) {
+          console.warn('ElevenLabs server error, using dictionary audio stream:', err);
+        }
+      }
+    }
+
+    // ========================================================
+    // DÒNG ÂM THANH NATIVE YOUDAO DICTIONARY (TIẾNG TRUNG, TIẾNG NHẬT, TIẾNG ANH)
+    // ========================================================
+    this.showToast(`🔊 Đang phát âm (${langLabel})...`);
+
     let primaryUrl = '';
     if (isJapanese) {
       primaryUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&le=jap`;
+    } else if (isChinese) {
+      primaryUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&le=zh`;
     } else if (isEnglish) {
       primaryUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(textToSpeak)}&type=2`;
     } else {
       primaryUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(textToSpeak)}`;
     }
 
-    const audio = document.createElement('audio');
-    audio.referrerPolicy = 'no-referrer';
-    audio.src = primaryUrl;
-    this._currentAudio = audio;
-
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(err => {
-        console.warn('Primary audio stream failed, trying Google TTS / Web Speech:', err);
-        const backupUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(textToSpeak)}`;
-        const backupAudio = document.createElement('audio');
-        backupAudio.referrerPolicy = 'no-referrer';
-        backupAudio.src = backupUrl;
-        this._currentAudio = backupAudio;
-
-        backupAudio.play().catch(gErr => {
-          console.warn('Backup audio failed, falling back to Web Speech Synthesis:', gErr);
-          this.fallbackWebSpeech(textToSpeak, targetLang);
-        });
+    this.playAudioUrl(primaryUrl, () => {
+      console.warn('Primary audio stream failed, trying Google TTS...');
+      const backupUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(textToSpeak)}`;
+      this.playAudioUrl(backupUrl, () => {
+        console.warn('Backup audio failed, falling back to Web Speech Synthesis...');
+        this.fallbackWebSpeech(textToSpeak, targetLang);
       });
-    }
+    });
   }
 
   fallbackWebSpeech(text, lang) {
@@ -809,10 +1043,70 @@ class FlashLearnApp {
     this.showToast('Đã dán mẫu code Tiếng Nhật 🇯🇵!');
   }
 
+  insertSampleChinese() {
+    const sample = `[
+  {
+    "word": "你好",
+    "phonetic": "nǐ hǎo",
+    "pos": "thán từ",
+    "meaning": "Xin chào (lời chào cơ bản, thân thiện)",
+    "example": "你好！很高兴认识你。",
+    "exampleMeaning": "Xin chào! Rất vui được gặp bạn."
+  },
+  {
+    "word": "学习",
+    "phonetic": "xuéxí",
+    "pos": "động từ",
+    "meaning": "Học tập, tiếp thu kiến thức",
+    "example": "他每天都在努力学习中文。",
+    "exampleMeaning": "Cậu ấy mỗi ngày đều chăm chỉ học tiếng Trung."
+  },
+  {
+    "word": "朋友",
+    "phonetic": "péngyou",
+    "pos": "danh từ",
+    "meaning": "Bạn bè, bạn thân thiết",
+    "example": "他们是从小一起长大的好朋友。",
+    "exampleMeaning": "Họ là những người bạn tốt lớn lên cùng nhau từ nhỏ."
+  },
+  {
+    "word": "谢谢",
+    "phonetic": "xièxie",
+    "pos": "động từ",
+    "meaning": "Cảm ơn, bày tỏ sự biết ơn",
+    "example": "非常感谢你的热情关照！",
+    "exampleMeaning": "Vô cùng cảm ơn sự quan tâm nhiệt tình của bạn!"
+  }
+]`;
+    this.aiCodeInput.value = sample;
+    this.showToast('Đã dán mẫu code Tiếng Trung 🇨🇳!');
+  }
+
   setPromptTemplate(lang) {
-    if (lang === 'jp') {
-      this.btnPromptLangJp.className = 'px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center gap-1 transition';
-      this.btnPromptLangEn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 transition flex items-center gap-1';
+    const activeClass = 'px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center gap-1 transition shadow-sm';
+    const inactiveClass = 'px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1';
+
+    if (this.btnPromptLangEn) this.btnPromptLangEn.className = inactiveClass;
+    if (this.btnPromptLangJp) this.btnPromptLangJp.className = inactiveClass;
+    if (this.btnPromptLangZh) this.btnPromptLangZh.className = inactiveClass;
+
+    if (lang === 'zh') {
+      if (this.btnPromptLangZh) this.btnPromptLangZh.className = activeClass;
+      this.promptTitleLabel.textContent = 'Mẫu Prompt Tiếng Trung (HSK / Giao tiếp):';
+      this.samplePromptText.textContent = `Hãy tạo cho tôi danh sách 15 từ vựng tiếng Trung chủ đề [CHỦ ĐỀ BẠN MUỐN, VD: HSK 1-4 / Giao tiếp du lịch / Ăn uống] dưới định dạng JSON sau:
+[
+  {
+    "word": "Chữ Hán (Ví dụ: 你好)",
+    "phonetic": "Phiên âm Pinyin kèm dấu (ví dụ: nǐ hǎo)",
+    "pos": "từ loại (danh từ, động từ, tính từ...)",
+    "meaning": "nghĩa tiếng Việt ngắn gọn, dễ nhớ",
+    "example": "Câu ví dụ tiếng Trung tự nhiên",
+    "exampleMeaning": "Dịch nghĩa câu ví dụ sang tiếng Việt"
+  }
+]
+Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
+    } else if (lang === 'jp') {
+      if (this.btnPromptLangJp) this.btnPromptLangJp.className = activeClass;
       this.promptTitleLabel.textContent = 'Mẫu Prompt Tiếng Nhật (JLPT / Giao tiếp):';
       this.samplePromptText.textContent = `Hãy tạo cho tôi danh sách 15 từ vựng tiếng Nhật chủ đề [CHỦ ĐỀ BẠN MUỐN, VD: JLPT N5-N4 / Giao tiếp quán ăn / Công việc] dưới định dạng JSON sau:
 [
@@ -827,8 +1121,7 @@ class FlashLearnApp {
 ]
 Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     } else {
-      this.btnPromptLangEn.className = 'px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center gap-1 transition';
-      this.btnPromptLangJp.className = 'px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 transition flex items-center gap-1';
+      if (this.btnPromptLangEn) this.btnPromptLangEn.className = activeClass;
       this.promptTitleLabel.textContent = 'Mẫu Prompt Tiếng Anh:';
       this.samplePromptText.textContent = `Hãy tạo cho tôi danh sách 15 từ vựng tiếng Anh chủ đề [CHỦ ĐỀ_CỦA_BẠN, ví dụ: IELTS Speaking / Công nghệ / Du lịch] dưới định dạng JSON sau:
 [
@@ -1194,24 +1487,43 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     // Auto Play Toggle Button
     this.btnToggleAutoPlay.addEventListener('click', () => this.toggleAutoPlay());
 
-    // Audio Buttons (Front word, Back word, Example sentence)
+    // Audio Buttons (Front word, Word speak, Back word, Example sentence)
+    if (this.btnWordSpeak) {
+      this.btnWordSpeak.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const card = this.getCurrentCard();
+        if (card) this.playAudio(card.word);
+      });
+    }
+
     this.btnPlaySound.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.preventDefault();
       const card = this.getCurrentCard();
       if (card) this.playAudio(card.word);
     });
 
     this.btnBackPlaySound.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.preventDefault();
       const card = this.getCurrentCard();
       if (card) this.playAudio(card.word);
     });
 
     this.btnPlayExampleSound.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.preventDefault();
       const card = this.getCurrentCard();
       if (card && card.example) this.playAudio(card.example);
     });
+
+    if (this.elevenLabsStatusBadge) {
+      this.elevenLabsStatusBadge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.showElevenLabsInfo();
+      });
+    }
 
     // Deck select change
     this.deckSelect.addEventListener('change', (e) => {
@@ -1249,12 +1561,14 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       tab.addEventListener('click', () => this.switchImportTab(tab.dataset.tab));
     });
 
-    this.btnInsertSampleEnglish.addEventListener('click', () => this.insertSampleEnglish());
-    this.btnInsertSampleJapanese.addEventListener('click', () => this.insertSampleJapanese());
+    if (this.btnInsertSampleEnglish) this.btnInsertSampleEnglish.addEventListener('click', () => this.insertSampleEnglish());
+    if (this.btnInsertSampleJapanese) this.btnInsertSampleJapanese.addEventListener('click', () => this.insertSampleJapanese());
+    if (this.btnInsertSampleChinese) this.btnInsertSampleChinese.addEventListener('click', () => this.insertSampleChinese());
 
-    this.btnPromptLangEn.addEventListener('click', () => this.setPromptTemplate('en'));
-    this.btnPromptLangJp.addEventListener('click', () => this.setPromptTemplate('jp'));
-    this.btnCopyPrompt.addEventListener('click', () => this.copyPromptText());
+    if (this.btnPromptLangEn) this.btnPromptLangEn.addEventListener('click', () => this.setPromptTemplate('en'));
+    if (this.btnPromptLangJp) this.btnPromptLangJp.addEventListener('click', () => this.setPromptTemplate('jp'));
+    if (this.btnPromptLangZh) this.btnPromptLangZh.addEventListener('click', () => this.setPromptTemplate('zh'));
+    if (this.btnCopyPrompt) this.btnCopyPrompt.addEventListener('click', () => this.copyPromptText());
 
     // PDF Drag & Drop and file picking
     this.dropZone.addEventListener('click', () => this.pdfFileInput.click());

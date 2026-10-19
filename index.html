@@ -54,7 +54,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
   <!-- Custom CSS with Cache Buster -->
-  <link rel="stylesheet" href="style.css?v=2.5">
+  <link rel="stylesheet" href="style.css?v=2.6">
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
 
@@ -88,6 +88,11 @@
 
       <!-- Right actions -->
       <div class="flex items-center gap-2">
+        <div id="elevenLabsStatusBadge" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60" title="Giọng đọc AI ElevenLabs (Model Flash v2.5 - Tiết kiệm điểm & Có Cache)">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-violet-500"></i>
+          <span>ElevenLabs AI</span>
+        </div>
         <button id="btnOpenImport" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-500/20 transition active:scale-95">
           <i data-lucide="plus-circle" class="w-4 h-4"></i>
           <span>Thêm từ</span>
@@ -157,14 +162,18 @@
                 Từ vựng
               </span>
               <span id="frontLangBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                🇯🇵 JP
+                🇬🇧 EN
+              </span>
+              <span id="frontAiBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60 inline-flex items-center gap-1" title="Giọng đọc AI ElevenLabs Flash 2.5">
+                <i data-lucide="sparkles" class="w-3 h-3 text-violet-500"></i>
+                <span>ElevenLabs AI</span>
               </span>
             </div>
             <div class="flex items-center gap-2">
               <button id="btnStarCard" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-amber-500 transition" title="Đánh dấu sao yêu thích">
                 <i data-lucide="star" class="w-5 h-5"></i>
               </button>
-              <button id="btnPlaySound" class="p-2 rounded-full bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-400 transition" title="Bấm để nghe phát âm giọng bản xứ">
+              <button id="btnPlaySound" class="p-2 rounded-full bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-400 transition" title="Bấm để nghe phát âm giọng AI ElevenLabs">
                 <i data-lucide="volume-2" class="w-5 h-5"></i>
               </button>
             </div>
@@ -173,9 +182,14 @@
           <!-- Card Body: Word & Phonetic -->
           <div class="text-center py-6 my-auto">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest block mb-2">MẶT TRƯỚC: TỪ VỰNG</span>
-            <h2 id="frontWord" class="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
-              桜 (さくら)
-            </h2>
+            <div class="inline-flex items-center justify-center gap-3 mb-3 flex-wrap">
+              <h2 id="frontWord" class="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                桜 (さくら)
+              </h2>
+              <button id="btnWordSpeak" class="p-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-indigo-500/30 dark:shadow-none transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center group focus:outline-none" title="Bấm nghe phát âm AI ElevenLabs (Flash 2.5)">
+                <i data-lucide="volume-2" class="w-6 h-6 transition-transform group-hover:scale-110"></i>
+              </button>
+            </div>
             <p id="frontPhonetic" class="font-mono text-base md:text-lg text-indigo-600 dark:text-indigo-400">
               sakura
             </p>
@@ -351,6 +365,9 @@
               Dán đoạn mã (JSON hoặc danh sách gạch đứng | / gạch ngang -):
             </label>
             <div class="flex items-center gap-2">
+              <button id="btnInsertSampleChinese" class="text-xs px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 hover:bg-red-100 transition font-medium flex items-center gap-1 border border-red-200 dark:border-red-900/40">
+                <span>🇨🇳 Mẫu tiếng Trung</span>
+              </button>
               <button id="btnInsertSampleJapanese" class="text-xs px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition font-medium flex items-center gap-1 border border-rose-200 dark:border-rose-900/40">
                 <span>🇯🇵 Mẫu tiếng Nhật</span>
               </button>
@@ -424,6 +441,9 @@ Hoặc JSON mảng các object: [ { &quot;word&quot;: &quot;...&quot;, &quot;mea
 
           <!-- Language Prompt Switcher -->
           <div class="flex items-center gap-2">
+            <button id="btnPromptLangZh" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 transition flex items-center gap-1">
+              <span>🇨🇳 Tiếng Trung</span>
+            </button>
             <button id="btnPromptLangJp" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold flex items-center gap-1 transition">
               <span>🇯🇵 Tiếng Nhật</span>
             </button>
@@ -491,11 +511,11 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.</pre>
           <div class="flex gap-2">
             <input type="text" id="newDeckNameInput" placeholder="Tên bộ thẻ (VD: Tiếng Nhật N4 Minna)..." class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
             <select id="newDeckLangSelect" class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="auto">🌐 Tự động nhận diện (Khuyên dùng)</option>
+              <option value="zh-CN">🇨🇳 Tiếng Trung</option>
               <option value="ja-JP">🇯🇵 Tiếng Nhật</option>
               <option value="en-US">🇬🇧 Tiếng Anh</option>
-              <option value="auto">🌐 Tự động</option>
               <option value="ko-KR">🇰🇷 Tiếng Hàn</option>
-              <option value="zh-CN">🇨🇳 Tiếng Trung</option>
             </select>
             <button id="btnCreateDeck" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition active:scale-95">
               Tạo
@@ -532,8 +552,8 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.</pre>
   </div>
 
   <!-- Scripts with Cache Buster -->
-  <script src="pdf-parser.js?v=2.5"></script>
-  <script src="app.js?v=2.5"></script>
+  <script src="pdf-parser.js?v=2.6"></script>
+  <script src="app.js?v=2.6"></script>
   <script>
     // Initialize Lucide icons
     lucide.createIcons();

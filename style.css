@@ -159,3 +159,21 @@ button:active {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.7);
 }
+
+/* Audio Playing Wave Pulse Animation */
+@keyframes audio-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.playing-audio {
+  animation: audio-pulse-ring 1.2s infinite ease-out !important;
+  transform: scale(1.08) !important;
+}

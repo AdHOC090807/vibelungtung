@@ -2,18 +2,45 @@
 
 Ứng dụng web học từ vựng bằng flashcard lật 2 mặt tương tự Quizlet / Anki, thiết kế hiện đại, mượt mà và trực quan.
 
-## 🚀 Cách mở và sử dụng
+## 🚀 Cách mở và sử dụng với giọng đọc AI ElevenLabs
 
-Chỉ cần nhấp đúp chuột để mở trực tiếp file `index.html` trong bất kỳ trình duyệt nào (Chrome, Edge, Firefox, Safari) mà không cần cài đặt thêm phần mềm gì.
+### Cách 1: Khởi động với giọng AI ElevenLabs (Khuyên dùng)
+Chỉ cần **nhấp đúp chuột vào file `start-server.bat`**. 
+Cửa sổ server sẽ tự động chạy và mở trình duyệt tại địa chỉ `http://localhost:3000`.
 
 Hoặc mở bằng terminal:
 ```powershell
-Start-Process "d:\web\index.html"
+py server.py
+# Hoặc: python server.py
 ```
+
+### Cách 2: Mở trực tiếp không cần server (Dùng giọng đọc dự phòng)
+Nhấp đúp chuột để mở trực tiếp file `index.html` trong bất kỳ trình duyệt nào. Khi chưa bật server, ứng dụng sẽ tự động chuyển sang giọng phát âm dự phòng.
 
 ---
 
-## ✨ Tính năng nổi bật
+## 🎙️ Tính năng Giọng đọc AI ElevenLabs (Flash 2.5 + Cache tiết kiệm điểm)
+
+1. **Bảo mật API Key**:
+   - API Key được cất an toàn trong file `.env` ở máy chủ cục bộ (không bao giờ lộ ra mã nguồn giao diện).
+   - Đã được tự động thêm vào `.gitignore` để tránh bị đẩy lên GitHub.
+
+2. **Model siêu tiết kiệm `eleven_flash_v2_5`**:
+   - Sử dụng model tối ưu của ElevenLabs giúp giảm 50% số điểm miễn phí tiêu tốn so với model thông thường.
+   - Giọng đọc mặc định: **Alice** (`Xb7hH8MSUJpSbSDYk0k2`) - Giọng chuẩn sư phạm, phát âm tiếng Anh cực kỳ trong trẻo, rõ ràng.
+
+3. **Cơ chế lưu đệm Cache thông minh (Tiết kiệm 100% điểm khi nghe lại)**:
+   - Toàn bộ các từ vựng sau khi được tải về lần đầu tiên sẽ được lưu vĩnh viễn dạng file `.mp3` trong thư mục `audio_cache/`.
+   - Khi bạn bấm nghe lại một từ đã học, server sẽ phát lại ngay lập tức từ ổ cứng mà **KHÔNG gọi đến ElevenLabs API**, đảm bảo không tốn thêm bất kỳ điểm miễn phí nào.
+
+4. **Nút phát âm chống lật thẻ (`stopPropagation`)**:
+   - Nút hình chiếc loa 🔊 được thiết kế nổi bật ngay cạnh từ vựng và ở thanh tiêu đề thẻ.
+   - Tích hợp hàm `stopPropagation()` chặn sự kiện lật thẻ, giúp bạn thoải mái nghe lại phát âm nhiều lần mà thẻ không bị lật lung tung.
+   - Hiệu ứng sóng âm phát sáng (Pulse Wave Animation) khi đang phát âm.
+
+---
+
+## ✨ Tính năng nổi bật khác
 
 1. **Thẻ Flashcard lật 3D 2 mặt**:
    - **Mặt trước**: Từ vựng, phiên âm chuẩn IPA, từ loại, nút nghe phát âm tiếng Anh chuẩn bản xứ (sử dụng Web Speech Synthesis của trình duyệt), nút đánh dấu yêu thích ⭐.
