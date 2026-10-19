@@ -241,18 +241,43 @@ async def generate_edge_tts(text: str, voice: str, filepath: str):
     comm = edge_tts.Communicate(text, voice)
     await comm.save(filepath)
 
+def cleanup_invalid_cache(directory: str = CACHE_DIR):
+    """Xóa mọi file trong audio_cache có kích thước 0 byte hoặc là JSON lỗi"""
+    if not os.path.exists(directory):
+        return
+    for fname in os.listdir(directory):
+        fpath = os.path.join(directory, fname)
+        if not os.path.isfile(fpath):
+            continue
+        size = os.path.getsize(fpath)
+        if size == 0:
+            print(f"[CACHE CLEANUP] Xóa file 0-byte: {fname}")
+            try:
+                os.remove(fpath)
+            except Exception:
+                pass
+            continue
+        try:
+            with open(fpath, 'rb') as f:
+                header = f.read(16)
+            if header.startswith(b'{') or header.startswith(b'<') or b'error' in header.lower():
+                print(f"[CACHE CLEANUP] Xóa file lỗi không phải MP3: {fname}")
+                os.remove(fpath)
+        except Exception:
+            pass
+
 async def generate_elevenlabs_tts(text: str, filepath: str, voice_id: Optional[str] = None):
     """Gọi REST API của ElevenLabs để sinh âm thanh AI đa ngôn ngữ (Nhật, Việt, Anh)"""
     if not ELEVENLABS_API_KEY:
         raise ValueError("Chưa cấu hình ELEVENLABS_API_KEY trong file .env")
-    import urllib.request
+    import requests
     target_voice = voice_id or ELEVENLABS_VOICE_ID or 'JBFqnCBsd6RMkjVDRZzb'
     target_model = ELEVENLABS_MODEL_ID or 'eleven_flash_v2_5'
-    api_url = f"https://api.elevenlabs.io/v1/text-to-speech/{target_voice}?output_format=mp3_44100_128"
+    api_url = f"https://api.elevenlabs.io/v1/text-to-speech/{target_voice}"
     headers = {
         "xi-api-key": ELEVENLABS_API_KEY,
         "Content-Type": "application/json",
-        "User-Agent": "FlashLearn-ElevenLabs/2.0"
+        "Accept": "audio/mpeg"
     }
     payload = {
         "text": text,
@@ -262,12 +287,19 @@ async def generate_elevenlabs_tts(text: str, filepath: str, voice_id: Optional[s
             "similarity_boost": 0.75
         }
     }
-    req = urllib.request.Request(api_url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
     loop = asyncio.get_event_loop()
     def _fetch():
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            return resp.read()
+        resp = requests.post(api_url, json=payload, headers=headers, timeout=15)
+        content_type = resp.headers.get("content-type", "").lower()
+        if resp.status_code != 200 or "audio" not in content_type:
+            print(f"[ELEVENLABS ERROR] HTTP {resp.status_code} ({content_type}): {resp.text[:200]}")
+            raise RuntimeError(f"ElevenLabs error ({resp.status_code}): {resp.text[:200]}")
+        if len(resp.content) == 0:
+            raise RuntimeError("ElevenLabs trả về dữ liệu rỗng (0 bytes)")
+        return resp.content
+
     data = await loop.run_in_executor(None, _fetch)
+    # CHỈ ghi file mp3 khi status_code == 200 và Content-Type chứa 'audio'
     with open(filepath, 'wb') as f:
         f.write(data)
 
@@ -315,6 +347,7 @@ class TtsRequest(BaseModel):
 async def lifespan(app: FastAPI):
     # Khởi tạo DB khi bật server
     init_db()
+    cleanup_invalid_cache()
     yield
 
 app = FastAPI(

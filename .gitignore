@@ -3,7 +3,7 @@
 .env.local
 .env.*.local
 
-# Audio cache directory (saves ElevenLabs credits, no need to commit binary audio)
+# Audio cache directory (saves ElevenLabs credits, local cache only)
 audio_cache/
 
 # Python cache
@@ -16,3 +16,9 @@ venv/
 # Node
 node_modules/
 package-lock.json
+
+# Explicitly ensure static audio assets and flashcards.json are tracked for GitHub Pages
+!audio/
+!audio/*.mp3
+!flashcards.json
+!.nojekyll

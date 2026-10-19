@@ -21,7 +21,8 @@ const DEFAULT_DECKS = [
         example: '春になると、桜の花がとても綺麗に咲きます。',
         exampleMeaning: 'Khi mùa xuân đến, hoa anh đào nở rất đẹp.',
         mastered: false,
-        starred: true
+        starred: true,
+        audio: 'audio/5a8fc57dfedfb80c.mp3'
       },
       {
         id: 'jp2',
@@ -32,7 +33,8 @@ const DEFAULT_DECKS = [
         example: '毎日朝ごはんをちゃんと食べます。',
         exampleMeaning: 'Mỗi ngày tôi đều ăn sáng đầy đủ.',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/63b014e10458c1ee.mp3'
       },
       {
         id: 'jp3',
@@ -43,7 +45,8 @@ const DEFAULT_DECKS = [
         example: '日本語の勉強はとても面白いです。',
         exampleMeaning: 'Việc học tiếng Nhật rất thú vị.',
         mastered: true,
-        starred: false
+        starred: false,
+        audio: 'audio/b8a8316890e4329e.mp3'
       },
       {
         id: 'jp4',
@@ -54,7 +57,8 @@ const DEFAULT_DECKS = [
         example: '富士山の景色は本当に素晴らしいですね。',
         exampleMeaning: 'Phong cảnh núi Phú Sĩ thật sự rất tuyệt vời.',
         mastered: false,
-        starred: true
+        starred: true,
+        audio: 'audio/f1abd94058bd3db3.mp3'
       },
       {
         id: 'jp5',
@@ -65,7 +69,8 @@ const DEFAULT_DECKS = [
         example: 'いつも助けてくれて心から感謝しています。',
         exampleMeaning: 'Tôi luôn ghi lòng biết ơn bạn vì đã luôn giúp đỡ tôi.',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/171479108859b7be.mp3'
       },
       {
         id: 'jp6',
@@ -76,7 +81,8 @@ const DEFAULT_DECKS = [
         example: '人との出会いを一期一会として大切にしたい。',
         exampleMeaning: 'Tôi muốn trân trọng từng cuộc gặp gỡ như một duyên lành chỉ có một lần trong đời.',
         mastered: false,
-        starred: true
+        starred: true,
+        audio: 'audio/d01437e6975ba447.mp3'
       },
       {
         id: 'jp7',
@@ -87,7 +93,8 @@ const DEFAULT_DECKS = [
         example: '週末に友達と一緒に映画を見に行きます。',
         exampleMeaning: 'Cuối tuần tôi đi xem phim cùng với bạn bè.',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/7fcb901a069f02f5.mp3'
       },
       {
         id: 'jp8',
@@ -98,7 +105,8 @@ const DEFAULT_DECKS = [
         example: 'どんなことがあっても、約束を守ります。',
         exampleMeaning: 'Dù có chuyện gì xảy ra, tôi cũng sẽ giữ trọn lời hứa.',
         mastered: false,
-        starred: true
+        starred: true,
+        audio: 'audio/0ca3a4b1556d0509.mp3'
       },
       {
         id: 'jp9',
@@ -109,7 +117,8 @@ const DEFAULT_DECKS = [
         example: '先生、いつも熱心に教えてくださりありがとうございます。',
         exampleMeaning: 'Thưa thầy cô, cảm ơn thầy cô đã luôn nhiệt tình chỉ dạy chúng em.',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/5b8e27bda7894474.mp3'
       },
       {
         id: 'jp10',
@@ -120,7 +129,8 @@ const DEFAULT_DECKS = [
         example: '私にとって家族が一番大切な存在です。',
         exampleMeaning: 'Đối với tôi, gia đình là điều quan trọng và quý giá nhất.',
         mastered: false,
-        starred: true
+        starred: true,
+        audio: 'audio/8ab4305d8edb6db5.mp3'
       },
       {
         id: 'jp11',
@@ -131,7 +141,8 @@ const DEFAULT_DECKS = [
         example: '来週、友達と日本へ旅行に行きます。',
         exampleMeaning: 'Tuần sau tôi sẽ đi du lịch Nhật Bản cùng bạn bè.',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/03337ec115238765.mp3'
       },
       {
         id: 'jp12',
@@ -142,7 +153,8 @@ const DEFAULT_DECKS = [
         example: '毎日日本語の単語を10個覚えるようにしています。',
         exampleMeaning: 'Mỗi ngày tôi đều cố gắng học thuộc 10 từ vựng tiếng Nhật.',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/75a8141958273f26.mp3'
       }
     ]
   },
@@ -161,7 +173,8 @@ const DEFAULT_DECKS = [
         example: '你好！很高兴认识你。',
         exampleMeaning: 'Xin chào! Rất vui được làm quen với bạn.',
         mastered: false,
-        starred: true
+        starred: true,
+        audio: 'audio/eae392995451d1c5.mp3'
       },
       {
         id: 'zh2',
@@ -172,7 +185,8 @@ const DEFAULT_DECKS = [
         example: '非常感谢你的热情帮助！',
         exampleMeaning: 'Vô cùng cảm ơn sự giúp đỡ nhiệt tình của bạn!',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/47d8b1f2162c849b.mp3'
       },
       {
         id: 'zh3',
@@ -183,7 +197,8 @@ const DEFAULT_DECKS = [
         example: '每天努力学习中文，进步很快。',
         exampleMeaning: 'Mỗi ngày chăm chỉ học tiếng Trung, tiến bộ rất nhanh.',
         mastered: true,
-        starred: false
+        starred: false,
+        audio: 'audio/5e6e940be3743be1.mp3'
       },
       {
         id: 'zh4',
@@ -194,7 +209,8 @@ const DEFAULT_DECKS = [
         example: '海内存知己，天涯若比邻。',
         exampleMeaning: 'Trong bốn bể có tri kỷ, thì chân trời cũng gần gũi như hàng xóm.',
         mastered: false,
-        starred: true
+        starred: true,
+        audio: 'audio/a95a30e2adb42678.mp3'
       },
       {
         id: 'zh5',
@@ -205,7 +221,8 @@ const DEFAULT_DECKS = [
         example: '世界很大，我想去看看。',
         exampleMeaning: 'Thế giới rất rộng lớn, tôi muốn đi ngắm nhìn.',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/672db541b9a66fe0.mp3'
       },
       {
         id: 'zh6',
@@ -216,7 +233,8 @@ const DEFAULT_DECKS = [
         example: '明天见，路上小心，再见！',
         exampleMeaning: 'Ngày mai gặp lại nhé, đi đường cẩn thận, tạm biệt!',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/393c60de764177a5.mp3'
       }
     ]
   },
@@ -235,7 +253,8 @@ const DEFAULT_DECKS = [
         example: 'Local businesses have proven to be remarkably resilient during the crisis.',
         exampleMeaning: 'Các doanh nghiệp địa phương đã chứng tỏ sự kiên cường đáng kể trong suốt cuộc khủng hoảng.',
         mastered: false,
-        starred: true
+        starred: true,
+        audio: 'audio/78b24d2325ef1c40.mp3'
       },
       {
         id: 'c2',
@@ -246,7 +265,8 @@ const DEFAULT_DECKS = [
         example: 'The wording of the agreement is ambiguous and open to interpretation.',
         exampleMeaning: 'Cách diễn đạt của bản thỏa thuận còn mơ hồ và có thể được hiểu theo nhiều hướng.',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/79692a743c91707a.mp3'
       },
       {
         id: 'c3',
@@ -257,7 +277,8 @@ const DEFAULT_DECKS = [
         example: 'She found it hard to comprehend how much the technology had advanced.',
         exampleMeaning: 'Cô ấy cảm thấy khó có thể lĩnh hội được công nghệ đã tiến bộ đến mức nào.',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/2ec8d542d89ea4f8.mp3'
       },
       {
         id: 'c4',
@@ -268,7 +289,8 @@ const DEFAULT_DECKS = [
         example: 'Smartphones have become ubiquitous in modern society.',
         exampleMeaning: 'Điện thoại thông minh đã trở nên phổ biến ở khắp mọi nơi trong xã hội hiện đại.',
         mastered: true,
-        starred: false
+        starred: false,
+        audio: 'audio/1872a40d1ace5a5e.mp3'
       },
       {
         id: 'c5',
@@ -279,7 +301,8 @@ const DEFAULT_DECKS = [
         example: 'He is meticulous about keeping his records up to date.',
         exampleMeaning: 'Anh ấy rất tỉ mỉ trong việc cập nhật hồ sơ của mình thường xuyên.',
         mastered: false,
-        starred: false
+        starred: false,
+        audio: 'audio/7aafad4c877fbf15.mp3'
       }
     ]
   }
@@ -296,17 +319,14 @@ class FlashLearnApp {
     this.parsedPdfCards = [];
     this._currentAudio = null;
     this._audioCache = new Map();
-    this._serverBaseUrl = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:8000';
-    this._isServerOnline = false;
     this.isAutoPlay = localStorage.getItem('flashlearn_autoplay') === 'true';
 
     this.initElements();
-    this.loadData();
     this.initEvents();
     this.initTheme();
     this.updateAutoPlayUI();
-    this.checkServerStatus();
-    this.render();
+    this.updateBadgeForStatic();
+    this.loadData();
   }
 
   initElements() {
@@ -407,52 +427,129 @@ class FlashLearnApp {
     this.toastMessage = document.getElementById('toastMessage');
   }
 
-  loadData() {
-    let saved = null;
+  async loadData() {
+    let localDecks = null;
     try {
-      saved = localStorage.getItem('flashlearn_app_data_v5') ||
-              localStorage.getItem('flashlearn_app_data_v4') ||
-              localStorage.getItem('flashlearn_app_data_v3') || 
-              localStorage.getItem('flashlearn_app_data_v2') || 
-              localStorage.getItem('flashlearn_app_data_v1');
+      const saved = localStorage.getItem(this.storageKey) ||
+                    localStorage.getItem('flashlearn_app_data_v4') ||
+                    localStorage.getItem('flashlearn_app_data_v3') || 
+                    localStorage.getItem('flashlearn_app_data_v2') || 
+                    localStorage.getItem('flashlearn_app_data_v1');
       if (saved) {
-        this.decks = JSON.parse(saved);
+        localDecks = JSON.parse(saved);
       }
     } catch (e) {
-      console.error('Lỗi khi tải dữ liệu từ LocalStorage:', e);
+      console.warn('Lỗi khi tải dữ liệu từ LocalStorage:', e);
     }
 
-    if (!this.decks || this.decks.length === 0) {
-      this.decks = JSON.parse(JSON.stringify(DEFAULT_DECKS));
-    } else {
-      // Ensure Japanese deck is present & has all 12 default cards
-      let jpDeck = this.decks.find(d => d.id === 'deck-japanese-n5');
-      if (!jpDeck) {
-        jpDeck = this.decks.find(d => d.lang && d.lang.startsWith('ja'));
+    let loadedFromStatic = false;
+    try {
+      // Nạp dữ liệu tĩnh từ flashcards.json bằng đường dẫn tương đối (tương thích 100% GitHub Pages)
+      const res = await fetch('flashcards.json');
+      if (res.ok) {
+        const staticCards = await res.json();
+        if (Array.isArray(staticCards) && staticCards.length > 0) {
+          this.initDecksFromStatic(staticCards, localDecks);
+          loadedFromStatic = true;
+          console.log('[FlashLearn] Đã nạp thành công flashcards.json tĩnh:', staticCards.length, 'thẻ.');
+        }
       }
-      const defaultJp = DEFAULT_DECKS.find(d => d.id === 'deck-japanese-n5');
-      if (!jpDeck) {
-        if (defaultJp) this.decks.unshift(JSON.parse(JSON.stringify(defaultJp)));
-      } else if (defaultJp) {
-        // Merge any default cards that aren't in jpDeck yet
-        defaultJp.cards.forEach(card => {
-          if (!jpDeck.cards.some(c => c.id === card.id || c.word === card.word)) {
-            jpDeck.cards.push(JSON.parse(JSON.stringify(card)));
-          }
-        });
-      }
+    } catch (err) {
+      console.warn('[FlashLearn] Không thể nạp flashcards.json, chuyển sang nạp từ dữ liệu cục bộ:', err);
+    }
 
-      // Ensure Chinese deck is present
-      const hasChinese = this.decks.some(d => d.id === 'deck-chinese-hsk' || (d.lang && d.lang.startsWith('zh')));
-      if (!hasChinese) {
-        const zhDeck = DEFAULT_DECKS.find(d => d.id === 'deck-chinese-hsk');
-        if (zhDeck) this.decks.splice(1, 0, JSON.parse(JSON.stringify(zhDeck)));
+    if (!loadedFromStatic) {
+      if (localDecks && localDecks.length > 0) {
+        this.decks = localDecks;
+      } else {
+        this.decks = JSON.parse(JSON.stringify(DEFAULT_DECKS));
       }
+    }
+
+    if (!this.decks.some(d => d.id === this.currentDeckId) && this.decks.length > 0) {
+      this.currentDeckId = this.decks[0].id;
     }
 
     this.saveData();
-    this.currentDeckId = this.decks[0].id;
     this.populateDeckSelectors();
+    this.render();
+  }
+
+  initDecksFromStatic(staticCards, localDecks) {
+    const deckMap = new Map();
+    staticCards.forEach(c => {
+      const dId = c.deckId || c.deck_id || 'default';
+      if (!deckMap.has(dId)) {
+        deckMap.set(dId, {
+          id: dId,
+          name: c.deckName || dId,
+          lang: c.deckLang || 'ja-JP',
+          createdAt: c.createdAt || Date.now(),
+          cards: []
+        });
+      }
+      deckMap.get(dId).cards.push({
+        id: c.id,
+        deckId: dId,
+        word: c.word || c.front,
+        front: c.front || c.word,
+        back: c.back || c.meaning,
+        phonetic: c.phonetic || '',
+        pos: c.pos || '',
+        meaning: c.meaning || c.back,
+        example: c.example || '',
+        exampleMeaning: c.exampleMeaning || c.example_meaning || '',
+        mastered: Boolean(c.mastered),
+        starred: Boolean(c.starred),
+        createdAt: c.createdAt || Date.now(),
+        audio: c.audio || ''
+      });
+    });
+
+    const staticDecks = Array.from(deckMap.values());
+
+    // Đồng bộ lại trạng thái học đã lưu trên trình duyệt (đã thuộc, đánh dấu sao)
+    if (localDecks && Array.isArray(localDecks)) {
+      const localCardState = new Map();
+      localDecks.forEach(ld => {
+        if (Array.isArray(ld.cards)) {
+          ld.cards.forEach(lc => {
+            const key = lc.id || lc.word;
+            localCardState.set(key, {
+              mastered: lc.mastered,
+              starred: lc.starred
+            });
+          });
+        }
+      });
+
+      staticDecks.forEach(d => {
+        d.cards.forEach(c => {
+          const state = localCardState.get(c.id) || localCardState.get(c.word);
+          if (state) {
+            c.mastered = Boolean(state.mastered);
+            c.starred = Boolean(state.starred);
+          }
+        });
+      });
+
+      // Bảo toàn các bộ thẻ tự tạo hoặc thẻ tự thêm của người dùng trong LocalStorage
+      localDecks.forEach(ld => {
+        if (!deckMap.has(ld.id)) {
+          staticDecks.push(ld);
+        } else {
+          const targetDeck = deckMap.get(ld.id);
+          const existingIds = new Set(targetDeck.cards.map(c => c.id));
+          ld.cards.forEach(lc => {
+            if (!existingIds.has(lc.id)) {
+              targetDeck.cards.push(lc);
+            }
+          });
+        }
+      });
+    }
+
+    this.decks = staticDecks;
   }
 
   saveData() {
@@ -731,14 +828,6 @@ class FlashLearnApp {
     card.mastered = isMastered;
     this.saveData();
 
-    if (this._isServerOnline) {
-      fetch(`${this._serverBaseUrl}/api/cards/${encodeURIComponent(card.id)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mastered: isMastered })
-      }).catch(err => console.warn('[FlashLearn] Lỗi lưu trạng thái thẻ lên SQLite:', err));
-    }
-
     if (isMastered) {
       this.showToast(`✅ Đã nhớ: "${card.word}"`);
     } else {
@@ -754,14 +843,6 @@ class FlashLearnApp {
 
     card.starred = !card.starred;
     this.saveData();
-
-    if (this._isServerOnline) {
-      fetch(`${this._serverBaseUrl}/api/cards/${encodeURIComponent(card.id)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ starred: card.starred })
-      }).catch(err => console.warn('[FlashLearn] Lỗi lưu sao lên SQLite:', err));
-    }
 
     this.render();
     this.showToast(card.starred ? '⭐ Đã thêm vào mục Yêu thích' : 'Đã bỏ yêu thích');
@@ -816,103 +897,21 @@ class FlashLearnApp {
     }
   }
 
-  // ==================== FASTAPI FULL-STACK & AUDIO SYSTEM ====================
-  async checkServerStatus() {
-    // Nếu đang chạy trên GitHub Pages (hoặc môi trường hosting tĩnh)
-    if (window.location.hostname.includes('github.io')) {
-      this._isServerOnline = false;
-      this.updateServerBadge(false, null, true);
-      console.log('[FlashLearn] Chạy trên GitHub Pages: Chế độ trực tuyến độc lập (Client-side Standalone)');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${this._serverBaseUrl}/api/status`, { mode: 'cors' });
-      if (res.ok) {
-        const data = await res.json();
-        this._isServerOnline = true;
-        this.updateServerBadge(true, data);
-        console.log('[FlashLearn] Full-stack Server is online:', data);
-        // Đồng bộ dữ liệu CSDL SQLite
-        await this.syncWithServer();
-      } else {
-        this._isServerOnline = false;
-        this.updateServerBadge(false);
-      }
-    } catch (e) {
-      this._isServerOnline = false;
-      this.updateServerBadge(false);
-    }
-  }
-
-  updateServerBadge(isOnline, data = null, isGitHubPages = false) {
+  // ==================== GITHUB PAGES & STATIC AUDIO SYSTEM ====================
+  updateBadgeForStatic() {
     if (!this.elevenLabsStatusBadge) return;
-    if (isGitHubPages) {
-      this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 cursor-pointer shadow-sm hover:bg-indigo-100 transition';
-      this.elevenLabsStatusBadge.innerHTML = `
-        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-        <i data-lucide="globe" class="w-3.5 h-3.5 text-indigo-600"></i>
-        <span>GitHub Pages (Trực tuyến)</span>
-      `;
-      this.elevenLabsStatusBadge.title = 'Đang chạy trực tiếp trên GitHub Pages!\n- Âm thanh: Trực tuyến chuẩn tức thì (Native Stream + Web Speech)\n- Dữ liệu: Lưu an toàn trên trình duyệt (LocalStorage)\n- Khi muốn dùng SQLite & giọng ElevenLabs AI: hãy tải về và chạy start-server.bat';
-    } else if (isOnline && data) {
-      this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60 cursor-pointer shadow-sm hover:bg-violet-100 transition';
-      this.elevenLabsStatusBadge.innerHTML = `
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-violet-600"></i>
-        <span>ElevenLabs AI (Đa ngôn ngữ) + SQLite</span>
-      `;
-      this.elevenLabsStatusBadge.title = `Server Full-stack & SQLite đang hoạt động!\nCSDL: SQLite (flashcards.db - ${data.cards_count} thẻ)\nGiọng đọc: ElevenLabs AI (${data.elevenlabs_model_id || 'eleven_flash_v2_5'})\nCache: ${data.cache_count} file (${data.cache_size_mb} MB)\nBấm vào để xem thông tin chi tiết.`;
-    } else {
-      this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200 transition';
-      this.elevenLabsStatusBadge.innerHTML = `
-        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        <span>Bật Server Full-stack</span>
-      `;
-      this.elevenLabsStatusBadge.title = 'Nhấp đúp vào file start-server.bat để khởi chạy server Full-stack (FastAPI + SQLite + ElevenLabs)!';
-    }
+    this.elevenLabsStatusBadge.className = 'hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 cursor-pointer shadow-sm hover:bg-emerald-100 transition';
+    this.elevenLabsStatusBadge.innerHTML = `
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-600"></i>
+      <span>Audio AI Tĩnh (GitHub Pages)</span>
+    `;
+    this.elevenLabsStatusBadge.title = 'Web đang chạy ở chế độ tĩnh hoàn toàn (Static) cho GitHub Pages.\n- Toàn bộ file âm thanh đã được tạo sẵn trong thư mục audio/\n- Dữ liệu được nạp từ flashcards.json và lưu trên trình duyệt (LocalStorage)\n- Bấm vào đây để xem thông tin chi tiết.';
     lucide.createIcons();
   }
 
-  async syncWithServer() {
-    try {
-      const resDecks = await fetch(`${this._serverBaseUrl}/api/decks`, { mode: 'cors' });
-      if (!resDecks.ok) return;
-      const decks = await resDecks.json();
-      if (!decks || decks.length === 0) return;
-
-      // Lấy thẻ cho từng bộ từ vựng
-      for (const d of decks) {
-        const resCards = await fetch(`${this._serverBaseUrl}/api/cards?deck_id=${encodeURIComponent(d.id)}`, { mode: 'cors' });
-        if (resCards.ok) {
-          d.cards = await resCards.json();
-        } else {
-          d.cards = [];
-        }
-      }
-
-      this.decks = decks;
-      this.saveData(); // Lưu dự phòng vào LocalStorage
-      
-      if (!this.decks.some(d => d.id === this.currentDeckId)) {
-        this.currentDeckId = this.decks[0].id;
-      }
-      this.populateDeckSelectors();
-      this.render();
-      console.log('[FlashLearn] Đã đồng bộ thành công CSDL SQLite:', this.decks.length, 'bộ thẻ');
-    } catch (e) {
-      console.warn('[FlashLearn] Lỗi khi đồng bộ CSDL từ server:', e);
-    }
-  }
-
   showServerInfo() {
-    if (window.location.hostname.includes('github.io')) {
-      this.showToast('🌐 Ứng dụng đang hoạt động trực tuyến trên GitHub Pages! Dữ liệu được lưu trên trình duyệt của bạn.');
-    } else if (this._isServerOnline) {
-      this.showToast('🚀 Server Full-stack (FastAPI) & CSDL SQLite (flashcards.db) đang kết nối! Giọng đọc ElevenLabs AI đa ngôn ngữ & lưu cache.');
-    } else {
-      this.showToast('💡 Hãy nhấp đúp file start-server.bat (hoặc chạy "py server.py") để kích hoạt server FastAPI + SQLite + ElevenLabs!');
-    }
+    this.showToast('✨ Web chạy tĩnh hoàn toàn trên GitHub Pages! Toàn bộ file âm thanh AI đã sẵn sàng trong thư mục audio/.');
   }
 
   stopAudio() {
@@ -980,82 +979,72 @@ class FlashLearnApp {
     }
   }
 
-  // ==================== MULTI-TIER AUDIO PLAYER ====================
-  // Tier 1: FastAPI POST /api/tts (ElevenLabs AI Multilingual + audio_cache MD5)
-  // Tier 2: Online Stream Fallback (Youdao / Google TTS)
-  // Tier 3: Web Speech Synthesis (offline browser fallback)
-  async playAudio(rawText, explicitLang = null) {
+  // ==================== STATIC & FALLBACK AUDIO PLAYER ====================
+  // Ưu tiên 1: File MP3 tĩnh pre-generated trong thư mục audio/ (đường dẫn tương đối)
+  // Ưu tiên 2: Online Stream Fallback (Youdao / Google TTS)
+  // Ưu tiên 3: Web Speech Synthesis (offline browser fallback)
+  playAudio(rawText, explicitLang = null) {
     if (!rawText) return;
 
-    // Tự động nhận diện ngôn ngữ văn bản: ja-JP (Nhật), vi-VN (Việt), en-US (Anh)
-    const targetLang = explicitLang || this.detectLanguage(rawText);
+    // Luôn dừng âm thanh đang phát trước đó
+    this.stopAudio();
+
+    const card = this.getCurrentCard();
+    const deck = this.getCurrentDeck();
+
+    // Tự động nhận diện ngôn ngữ văn bản: ja-JP (Nhật), vi-VN (Việt), en-US (Anh), zh-CN (Trung)
+    const targetLang = explicitLang || (card && card.deckLang) || (deck && deck.lang) || this.detectLanguage(rawText);
     const clean = this.cleanTextForSpeech(rawText, targetLang);
     const textToSpeak = clean || rawText;
 
     const langLabels = {
       'ja-JP': 'Tiếng Nhật 🇯🇵',
       'vi-VN': 'Tiếng Việt 🇻🇳',
-      'en-US': 'Tiếng Anh 🇬🇧'
+      'en-US': 'Tiếng Anh 🇬🇧',
+      'zh-CN': 'Tiếng Trung 🇨🇳'
     };
     const langLabel = langLabels[targetLang] || 'Đa ngôn ngữ 🌐';
 
-    // Dừng âm thanh đang phát trước đó
-    this.stopAudio();
+    // 1. Kiểm tra xem thẻ hiện tại có sẵn file âm thanh tĩnh (audio) không
+    const isCardWord = card && (rawText === card.word || rawText === card.front || textToSpeak === this.cleanTextForSpeech(card.word, targetLang));
+    const staticAudioUrl = (isCardWord && card && card.audio) ? card.audio : null;
 
-    const cacheKey = `${textToSpeak.toLowerCase().trim()}:${targetLang}`;
+    if (staticAudioUrl) {
+      this.startAudioAnimation();
+      this.showToast(`🔊 ${langLabel} ✨ [Audio AI Tĩnh]`);
 
-    // 1. Kiểm tra cache trong bộ nhớ RAM trình duyệt
-    if (this._audioCache && this._audioCache.has(cacheKey)) {
-      this.showToast(`🔊 ${langLabel} ⚡ [Audio Cache]`);
-      const cachedUrl = this._audioCache.get(cacheKey);
-      this.playAudioUrl(cachedUrl, () => {
-        this.fallbackOnlineOrSpeech(textToSpeak, targetLang);
-      });
+      const audio = new Audio();
+      audio.src = staticAudioUrl;
+      this._currentAudio = audio;
+
+      audio.onended = () => {
+        this.stopAudioAnimation();
+        this._currentAudio = null;
+      };
+
+      audio.onerror = (e) => {
+        console.warn(`[FlashLearn] Lỗi tải file audio tĩnh '${staticAudioUrl}' (404/Network):`, e);
+        this.stopAudioAnimation();
+        this._currentAudio = null;
+        this.showToast(`⚠️ Không tìm thấy file âm thanh (${staticAudioUrl}). Đang phát bằng giọng đọc trình duyệt...`, true);
+        this.fallbackWebSpeech(textToSpeak, targetLang);
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.warn('[FlashLearn] Lỗi phát âm thanh:', err);
+          this.stopAudioAnimation();
+          this._currentAudio = null;
+          this.fallbackWebSpeech(textToSpeak, targetLang);
+        });
+      }
       return;
     }
 
+    // 2. Nếu không có file tĩnh (nghĩa, ví dụ, hoặc thẻ mới tạo), phát qua stream trực tuyến hoặc Web Speech
     this.showToast(`🎙️ Đang phát âm (${langLabel})...`);
-
-    // 2. GỌI API POST /api/tts CỦA SERVER (ELEVENLABS + AUDIO_CACHE)
-    let serverSucceeded = false;
-    if (this._isServerOnline) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-
-        const response = await fetch(`${this._serverBaseUrl}/api/tts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: textToSpeak,
-            lang: targetLang
-          }),
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const isCacheHit = response.headers.get('X-Cache') === 'HIT';
-          const source = response.headers.get('X-Source') || 'ElevenLabs';
-          this.showToast(isCacheHit ? `🔊 ${langLabel} ⚡ [Audio Cache]` : `✨ ${langLabel} 🎙️ [${source} AI]`);
-          const audioBlob = await response.blob();
-          const objectUrl = URL.createObjectURL(audioBlob);
-          this._audioCache.set(cacheKey, objectUrl);
-          this.playAudioUrl(objectUrl, () => {
-            this.fallbackOnlineOrSpeech(textToSpeak, targetLang);
-          });
-          serverSucceeded = true;
-          return;
-        }
-      } catch (err) {
-        console.warn('[FlashLearn] Server /api/tts lỗi, chuyển sang luồng dự phòng:', err);
-      }
-    }
-
-    // 3. FALLBACK BẮT BUỘC: NẾU GỌI /api/tts BỊ LỖI HOẶC CHƯA BẬT SERVER
-    if (!serverSucceeded) {
-      this.fallbackOnlineOrSpeech(textToSpeak, targetLang);
-    }
+    this.fallbackOnlineOrSpeech(textToSpeak, targetLang);
   }
 
   fallbackOnlineOrSpeech(text, lang) {
@@ -1135,12 +1124,6 @@ class FlashLearnApp {
       this.resetFlipWithoutAnimation();
       this.currentCardIndex = 0;
       this.saveData();
-
-      if (this._isServerOnline) {
-        fetch(`${this._serverBaseUrl}/api/decks/${encodeURIComponent(deck.id)}/reset`, {
-          method: 'POST'
-        }).catch(err => console.warn('[FlashLearn] Lỗi đặt lại tiến trình trên SQLite:', err));
-      }
 
       this.render();
       this.showToast('🔄 Đã đặt lại toàn bộ tiến trình học!');
@@ -1499,18 +1482,6 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       };
       this.decks.push(targetDeck);
       targetDeckId = targetDeck.id;
-
-      if (this._isServerOnline) {
-        fetch(`${this._serverBaseUrl}/api/decks`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: targetDeck.id,
-            name: targetDeck.name,
-            lang: targetDeck.lang
-          })
-        }).catch(err => console.warn('[FlashLearn] Lỗi lưu deck lên server:', err));
-      }
     }
 
     let newCards = [];
@@ -1537,20 +1508,6 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     this.populateDeckSelectors();
     this.closeImportModal();
     this.render();
-
-    // Lưu thẳng vào cơ sở dữ liệu SQLite qua API
-    if (this._isServerOnline) {
-      fetch(`${this._serverBaseUrl}/api/cards`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          deck_id: targetDeck.id,
-          cards: newCards
-        })
-      }).then(res => res.json())
-        .then(data => console.log('[FlashLearn] Đã lưu thẻ vào SQLite:', data))
-        .catch(err => console.warn('[FlashLearn] Lỗi lưu thẻ lên SQLite:', err));
-    }
 
     // Reset inputs
     this.aiCodeInput.value = '';
@@ -1618,18 +1575,6 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
       cards: []
     };
 
-    if (this._isServerOnline) {
-      fetch(`${this._serverBaseUrl}/api/decks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: newDeck.id,
-          name: newDeck.name,
-          lang: newDeck.lang
-        })
-      }).catch(err => console.warn('[FlashLearn] Lỗi lưu deck lên SQLite:', err));
-    }
-
     this.decks.push(newDeck);
     this.currentDeckId = newDeck.id;
     this.resetFlipWithoutAnimation();
@@ -1659,12 +1604,6 @@ Chỉ xuất duy nhất khối JSON, không kèm lời dẫn.`;
     if (!deck) return;
 
     if (confirm(`Bạn có chắc muốn xóa bộ từ vựng "${deck.name}" và toàn bộ ${deck.cards.length} thẻ không?`)) {
-      if (this._isServerOnline) {
-        fetch(`${this._serverBaseUrl}/api/decks/${encodeURIComponent(deckId)}`, {
-          method: 'DELETE'
-        }).catch(err => console.warn('[FlashLearn] Lỗi xóa deck trên SQLite:', err));
-      }
-
       this.decks = this.decks.filter(d => d.id !== deckId);
       if (this.currentDeckId === deckId) {
         this.currentDeckId = this.decks.length > 0 ? this.decks[0].id : null;

@@ -20,9 +20,29 @@ py server.py
 # Hoặc: python server.py
 ```
 
-### Cách 2: Sử dụng trực tiếp trên GitHub Pages / Mở file index.html
+### Cách 2: Chạy trực tiếp trên GitHub Pages (Tĩnh 100% không cần server)
 - Link trực tuyến: [https://adhoc090807.github.io/vibelungtung/](https://adhoc090807.github.io/vibelungtung/)
-- Khi không bật server local, ứng dụng tự động kích hoạt chế độ **Offline / Trực tuyến** với `window.speechSynthesis` và bộ nhớ `localStorage`, đảm bảo bấm loa lúc nào cũng có âm thanh!
+- Web chạy hoàn toàn **Static (Client-side)** trên GitHub Pages:
+  - Dữ liệu thẻ và bộ từ được nạp trực tiếp từ `flashcards.json` (đường dẫn tương đối).
+  - Toàn bộ giọng đọc AI chất lượng cao được lưu sẵn trong thư mục `audio/` (tên file theo mã băm SHA1).
+  - Bấm loa phát ngay lập tức không trễ, không phụ thuộc server Python.
+  - Tiến trình học, thẻ yêu thích, hoặc thẻ thêm mới được lưu tự động trên trình duyệt (`localStorage`).
+  - Hỗ trợ đầy đủ bộ trích xuất PDF (`pdf-parser.js`) trực tiếp trên client.
+
+### 🔄 Cách cập nhật thẻ và sinh lại Audio trước khi đẩy lên GitHub:
+Khi bạn thêm từ mới hoặc sửa đổi thẻ trong `flashcards.db` ở máy local:
+1. Chạy script tạo dữ liệu tĩnh:
+   ```powershell
+   py generate_static.py
+   ```
+   - Script tự động đọc `flashcards.db`, sinh âm thanh AI vào `audio/` (tự động bỏ qua file đã có để tiết kiệm quota ElevenLabs) và xuất `flashcards.json`.
+2. Đẩy lên GitHub:
+   ```powershell
+   git add .
+   git commit -m "Update static flashcards and audio"
+   git push origin main
+   ```
+3. GitHub Pages sẽ tự động cập nhật web mới nhất!
 
 ---
 
